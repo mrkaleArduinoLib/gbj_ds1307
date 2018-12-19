@@ -34,10 +34,6 @@ enum Addresses
 {
   ADDRESS = 0x68,
 };
-enum ErrorCodes
-{
-  ERROR_RESET = 255,  // Sensor reset failure
-};
 enum ConvertionRate
 {
   SQW_RATE_1HZ = B00,  // 1 Hz
@@ -55,6 +51,8 @@ struct Datetime
   uint8_t minute;
   uint8_t second;
   uint8_t weekday;
+  bool mode12h;
+  bool pm;
 };
 
 
@@ -95,9 +93,6 @@ uint8_t begin();
   RETURN:
   Result code.
 */
-uint8_t clockStart() { return setClockHalt(~PARAM_STOP); };
-uint8_t clockStop() { return setClockHalt(PARAM_STOP); };
-
 uint8_t getDateTime(Datetime &dtRecord);
 uint8_t setDateTime(const Datetime &dtRecord);
 
@@ -117,16 +112,16 @@ uint8_t setDateTime(const Datetime &dtRecord);
   Result code.
 */
 uint8_t setConfiguration();
+
+
+// Preparation of timekeeping registers
+inline void configClockEnable() { _rtcRecord.second &= ~(1 << CONFIG_CH); };
+inline void configClockDisable() { _rtcRecord.second |= (1 << CONFIG_CH); };
 // Preparation of control register value
 inline void configSqwLevelHigh() { _rtcRecord.control |= (1 << CONFIG_OUT); };
 inline void configSqwLevelLow() { _rtcRecord.control &= ~(1 << CONFIG_OUT); };
 inline void configSqwEnable() { _rtcRecord.control |= (1 << CONFIG_SQWE); };
 inline void configSqwDisable() { _rtcRecord.control &= ~(1 << CONFIG_SQWE); };
-//
-inline void configMode12H() { _rtcRecord.hour |= (1 << CONFIG_12H); };
-inline void configMode24H() { _rtcRecord.hour &= ~(1 << CONFIG_12H); };
-inline void configClockStop() { _rtcRecord.second |= (1 << CONFIG_CH); };
-inline void configClockStart() { _rtcRecord.second &= ~(1 << CONFIG_CH); };
 
 
 /*
@@ -151,11 +146,12 @@ void configRate(uint8_t rate);
 //------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
-inline uint8_t getSqwLevel() { return _rtcRecord.control >> CONFIG_OUT; };
 inline uint8_t getRate() { return (_rtcRecord.control >> CONFIG_RS0) & B11; };
-inline bool getSqwEnabled() { return _rtcRecord.control & (1 << CONFIG_SQWE); };
-inline bool getClockRunning() { return (((_rtcRecord.second >> CONFIG_CH) & B1) == ~PARAM_STOP); };
+inline uint8_t getSqwLevel() { return (_rtcRecord.control >> CONFIG_OUT) & B1; };
 inline bool getPowerUp() { return _rtcRecord.control == PARAM_POWERUP; };
+inline bool getSqwEnabled() { return (_rtcRecord.control >> CONFIG_SQWE) & B1 == 1; };
+inline bool getClockEnabled() { return (_rtcRecord.second >> CONFIG_CH) & B1 == 0; };
+inline bool getClockMode12H() { return (_rtcRecord.hour >> CONFIG_12H) & B1 == 1; };
 
 
 /*
@@ -192,31 +188,29 @@ enum Commands
 };
 enum ConfigBits
 {
-  // Control register
   CONFIG_OUT = 7,  // Output level when SQW is disabled (powerup 0)
   CONFIG_SQWE = 4,  // Square wave enabled (powerup 0)
   CONFIG_RS1 = 1,  // Rate select MSb (powerup 1)
   CONFIG_RS0 = 0,  // Rate select LSb (powerup 1)
-  // Seconds register
-  CONFIG_CH = 7,  // Clock halt bit (powerup 1)
-  // Hours register
+};  // Configuration bits order in control register
+enum HourBits
+{
   CONFIG_12H = 6,  // 12/24 mode
   CONFIG_PM = 5,  // AM/PM or 0 ~ 2
-};  // Configuration bits order in control register
+};  // Bits order in hours register
+enum SecondBits
+{
+  CONFIG_CH = 7,  // Clock halt bit (powerup 1)
+};  // Bits order in seconds register
 enum Params
 {
   PARAM_POWERUP = 0x03,  // Control register byte after power-up reset
-  PARAM_STOP = B1,  // Clock halt seconds bit for stopped oscillator
 };
+
 
 //------------------------------------------------------------------------------
 // Private attributes
 //------------------------------------------------------------------------------
-struct
-{
-  bool mode24;  // Flag for using 24 hour mode, else 12 hour one
-  bool running;  // Flag running oscillator determined by CH seconds bit
-} _status;
 struct
 {
   uint8_t second;
@@ -228,6 +222,7 @@ struct
   uint8_t year;
   uint8_t control;
 } _rtcRecord;
+
 
 //------------------------------------------------------------------------------
 // Private methods - they return result code if not stated else
