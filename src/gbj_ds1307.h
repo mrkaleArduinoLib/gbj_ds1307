@@ -20,10 +20,10 @@
 #ifndef GBJ_DS1307_H
 #define GBJ_DS1307_H
 
-#include "gbj_twowire.h"
+#include "gbj_memory.h"
 
 
-class gbj_ds1307 : public gbj_twowire
+class gbj_ds1307 : public gbj_memory
 {
 public:
 //------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ struct Datetime
   Constructor taken from parent class.
 */
 gbj_ds1307(uint8_t pinSDA = 4, uint8_t pinSCL = 5) \
-: gbj_twowire(CLOCK_100KHZ, pinSDA, pinSCL) {};
+: gbj_memory(CLOCK_100KHZ, pinSDA, pinSCL) {};
 
 
 /*
@@ -146,12 +146,13 @@ void configRate(uint8_t rate);
 //------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
+inline uint8_t getControlReg() { return _rtcRecord.control; };
 inline uint8_t getRate() { return (_rtcRecord.control >> CONFIG_RS0) & B11; };
 inline uint8_t getSqwLevel() { return (_rtcRecord.control >> CONFIG_OUT) & B1; };
 inline bool getPowerUp() { return _rtcRecord.control == PARAM_POWERUP; };
-inline bool getSqwEnabled() { return (_rtcRecord.control >> CONFIG_SQWE) & B1 == 1; };
-inline bool getClockEnabled() { return (_rtcRecord.second >> CONFIG_CH) & B1 == 0; };
-inline bool getClockMode12H() { return (_rtcRecord.hour >> CONFIG_12H) & B1 == 1; };
+inline bool getSqwEnabled() { return ((_rtcRecord.control >> CONFIG_SQWE) & B1) == 1; };
+inline bool getClockEnabled() { return ((_rtcRecord.second >> CONFIG_CH) & B1) == 0; };
+inline bool getClockMode12H() { return ((_rtcRecord.hour >> CONFIG_12H) & B1) == 1; };
 
 
 /*
@@ -183,8 +184,8 @@ enum Commands
   CMD_REG_MONTH = 0x05,
   CMD_REG_YEAR = 0x06,
   CMD_REG_CONTROL = 0x07,  // Control register
-  CMD_REG_MEM_MIN = 0x08,  // First memory position
-  CMD_REG_MEM_MAX = 0x3F,  // Last memory position
+  CMD_REG_RAM_MIN = 0x08,  // First memory position
+  CMD_REG_RAM_MAX = 0x3F,  // Last memory position
 };
 enum ConfigBits
 {
