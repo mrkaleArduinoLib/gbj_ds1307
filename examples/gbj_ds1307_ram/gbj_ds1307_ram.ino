@@ -1,10 +1,11 @@
 /*
   NAME:
-  Reading real date and time from DS1307 chip using gbjDS1307 library.
+  Usage of battery backed up random access memory of DS1307 chip using
+  gbjDS1307 library.
 
   DESCRIPTION:
-  The sketch reads time keeping register and display real date and time from
-  the chip.
+  The sketch writes a byte, integer, and float number to the chip's RAM and
+  reads it after for checking.
   - Connect modul's pins to microcontroller's I2C bus as described in README.md
     for used platform accordingly.
 
@@ -15,7 +16,7 @@
   CREDENTIALS:
   Author: Libor Gabaj
 */
-#define SKETCH "GBJ_DS1307_DATETIME_GET 1.0.0"
+#define SKETCH "GBJ_DS1307_RAM 1.0.0"
 
 #include "gbj_ds1307.h"
 
@@ -23,7 +24,11 @@
 // Software configuration
 gbj_ds1307 Device = gbj_ds1307();
 // gbj_ds1307 Device = gbj_ds1307(D2, D1);
-gbj_ds1307::Datetime rtcDateTime;
+
+const unsigned int POSITION = 0;
+byte valueByte = 0xAA;
+int valueInt = 0xAA55;
+float valueFloat = 123.45;
 
 
 void errorHandler(String location)
@@ -105,29 +110,63 @@ void setup()
     errorHandler("Begin");
     return;
   }
-  // Reading datetime
-  if (Device.getDateTime(rtcDateTime))
+
+  // Write and read byte
+  Serial.println("Stored byte: 0x" + String(valueByte, HEX));
+  if (Device.store(POSITION, valueByte))
   {
-    errorHandler("Datetime read");
+    errorHandler("Store byte");
     return;
   }
-  // Date
-  Serial.print("Date: ");
-  Serial.print((rtcDateTime.day < 10 ? "0" : "") + String(rtcDateTime.day) + ".");
-  Serial.print((rtcDateTime.month < 10 ? "0" : "") + String(rtcDateTime.month) + ".");
-  Serial.println(rtcDateTime.year);
-  Serial.print("Week day: ");
-  Serial.println(rtcDateTime.weekday);
+  valueByte = 0;
+  if (Device.retrieve(POSITION, valueByte))
+  {
+    errorHandler("Retrieved byte");
+    return;
+  }
+  Serial.println("Retrieved byte: 0x" + String(valueByte, HEX));
   Serial.println("---");
-  // Time
-  Serial.print("Time: ");
-  Serial.print((rtcDateTime.hour < 10 ? "0" : "") + String(rtcDateTime.hour) + ":");
-  Serial.print((rtcDateTime.minute < 10 ? "0" : "") + String(rtcDateTime.minute) + ":");
-  Serial.print((rtcDateTime.second < 10 ? "0" : "") + String(rtcDateTime.second));
-  Serial.println(rtcDateTime.mode12h ? (rtcDateTime.pm ? " PM" : " AM") : "");
-  Serial.print("Clock mode: ");
-  Serial.print(rtcDateTime.mode12h ? "12" : "24");
-  Serial.println(" hours");
+
+  // Write and read integer
+  Serial.println("Stored integer: 0x" + String(valueInt, HEX));
+  if (Device.store(POSITION, valueInt))
+  {
+    errorHandler("Store integer");
+    return;
+  }
+  valueInt = 0;
+  if (Device.retrieve(POSITION, valueInt))
+  {
+    errorHandler("Retrieved integer");
+    return;
+  }
+  Serial.println("Retrieved integer: 0x" + String(valueInt, HEX));
+  Serial.println("---");
+
+  // Write and read float
+  Serial.println("Stored float: " + String(valueFloat));
+  if (Device.store(POSITION, valueFloat))
+  {
+    errorHandler("Store float");
+    return;
+  }
+  valueFloat = 0.0;
+  if (Device.retrieve(POSITION, valueFloat))
+  {
+    errorHandler("Retrieved float");
+    return;
+  }
+  Serial.println("Retrieved float: " + String(valueFloat));
+  Serial.println("---");
+
+  // Read recent position
+  valueByte = 0xFF;
+  if (Device.retrieveCurrent(valueByte))
+  {
+    errorHandler("Retrieved current");
+    return;
+  }
+  Serial.println("Retrieved current: 0x" + String(valueByte, HEX));
   Serial.println("---");
   Serial.println("END");
 }

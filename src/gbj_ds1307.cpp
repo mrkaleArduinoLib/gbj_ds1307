@@ -4,10 +4,8 @@ const String gbj_ds1307::VERSION = "GBJ_DS1307 1.0.0";
 
 uint8_t gbj_ds1307::begin()
 {
-  if (gbj_memory::begin(CMD_REG_RAM_MAX - CMD_REG_RAM_MIN + 1, \
-                        CMD_REG_RAM_MAX - CMD_REG_RAM_MIN + 1, \
-                        CMD_REG_RAM_MIN \
-    )) return getLastResult();
+  if (gbj_memory::begin(CMD_REG_RAM_MAX, CMD_REG_RAM_MAX - CMD_REG_RAM_MIN + 1, \
+    CMD_REG_RAM_MIN)) return getLastResult();
   setPositionInBytes();
   if (registerAddress(ADDRESS)) return getLastResult();
   if (readRtcRecord()) return getLastResult();

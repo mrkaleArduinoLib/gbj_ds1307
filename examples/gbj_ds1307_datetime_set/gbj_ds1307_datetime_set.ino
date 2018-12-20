@@ -1,10 +1,10 @@
 /*
   NAME:
-  Reading real date and time from DS1307 chip using gbjDS1307 library.
+  Setting date and time to DS1307 chip using gbjDS1307 library.
 
   DESCRIPTION:
-  The sketch reads time keeping register and display real date and time from
-  the chip.
+  The sketch writes to time keeping register and reads it back for displaying
+  and checking.
   - Connect modul's pins to microcontroller's I2C bus as described in README.md
     for used platform accordingly.
 
@@ -15,7 +15,7 @@
   CREDENTIALS:
   Author: Libor Gabaj
 */
-#define SKETCH "GBJ_DS1307_DATETIME_GET 1.0.0"
+#define SKETCH "GBJ_DS1307_DATETIME_SET 1.0.0"
 
 #include "gbj_ds1307.h"
 
@@ -91,6 +91,17 @@ void errorHandler(String location)
 
 void setup()
 {
+  // Desired datetime
+  rtcDateTime.year = 2018;
+  rtcDateTime.month = 12;
+  rtcDateTime.day = 20;
+  rtcDateTime.weekday = 4;
+  rtcDateTime.hour = 19;
+  rtcDateTime.minute = 54;
+  rtcDateTime.second = 32;
+  rtcDateTime.mode12h = true;
+  rtcDateTime.pm = false;
+  //
   Serial.begin(9600);
   Serial.println(SKETCH);
   Serial.println("Libraries:");
@@ -105,6 +116,13 @@ void setup()
     errorHandler("Begin");
     return;
   }
+  // Writing datetime
+  if (Device.setDateTime(rtcDateTime))
+  {
+    errorHandler("Datetime write");
+    return;
+  }
+  // delay(PERIOD_WAIT);
   // Reading datetime
   if (Device.getDateTime(rtcDateTime))
   {
