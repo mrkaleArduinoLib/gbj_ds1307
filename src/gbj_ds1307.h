@@ -82,19 +82,47 @@ uint8_t begin();
 
 
 /*
-  Start or clock oscillator.
+  Read from time keeping registers of the chip.
 
   DESCRIPTION:
-  The particular method starts or stops the clock oscillator, so that it control
-  counting time and generating square wave output.
+  The method reads datetime from the chip, process it and place it to the
+  referenced external structure (datetime record).
+  - The method expects 21th century, so that add 2000 to the read two-digit
+  year number.
 
-  PARAMETERS: none
+  PARAMETERS:
+  dtRecord - Referenced structure variable for writing read date and time.
+             - Data type: Datetime
+             - Default value: none
+             - Limited range: address space
 
   RETURN:
   Result code.
 */
 uint8_t getDateTime(Datetime &dtRecord);
+
+
+/*
+  Write to time keeping registers of the chip.
+
+  DESCRIPTION:
+  The method sanitizes datetime taken from referenced external structure
+  (datetime record) and writes it to the chip.
+  - The method strips century from the year and write just two-digit year number.
+  - The method writes cached value to the control register of the chip as well,
+    so that the chip can be set, start and configured at once.
+
+  PARAMETERS:
+  dtRecord - Referenced structure variable for desired date and time.
+             - Data type: Datetime
+             - Default value: none
+             - Limited range: address space
+
+  RETURN:
+  Result code.
+*/
 uint8_t setDateTime(const Datetime &dtRecord);
+
 
 //------------------------------------------------------------------------------
 // Public setters - they usually return result code.
@@ -193,7 +221,7 @@ enum ConfigBits
   CONFIG_SQWE = 4,  // Square wave enabled (powerup 0)
   CONFIG_RS1 = 1,  // Rate select MSb (powerup 1)
   CONFIG_RS0 = 0,  // Rate select LSb (powerup 1)
-};  // Configuration bits order in control register
+};  // Bits order in control register
 enum HourBits
 {
   CONFIG_12H = 6,  // 12/24 mode
@@ -231,26 +259,6 @@ struct
 uint8_t readRtcRecord();
 inline uint8_t bcd2bin (uint8_t bcdValue) { return bcdValue - 6 * (bcdValue >> 4); }
 inline uint8_t bin2bcd (uint8_t binValue) { return binValue + 6 * (binValue / 10); }
-
-
-/*
-  Activate register.
-
-  DESCRIPTION:
-  The method sends input command to the pointer register if needed in order to
-  activate corresponding data register.
-
-  PARAMETERS:
-  cmdRegister - Command for selecting internal register.
-                - Data type: non-negative integer
-                - Default value: none
-                - Limited range: CMD_REG_TEMP ~ CMD_REG_THIGH
-  RETURN:
-  Result code.
-*/
-uint8_t activateRegister(uint8_t cmdRegister);
-
-uint8_t setClockHalt(uint8_t bitCH);
 
 };
 
