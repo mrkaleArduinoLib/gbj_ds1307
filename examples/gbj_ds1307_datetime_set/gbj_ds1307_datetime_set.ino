@@ -1,6 +1,6 @@
 /*
   NAME:
-  Setting date and time to DS1307 chip using gbjDS1307 library.
+  Setting arbitrary date and time to DS1307 chip using gbjDS1307 library.
 
   DESCRIPTION:
   The sketch writes to time keeping register and reads it back for displaying
@@ -94,9 +94,9 @@ void setup()
   // Desired datetime
   rtcDateTime.year = 2018;
   rtcDateTime.month = 12;
-  rtcDateTime.day = 20;
-  rtcDateTime.weekday = 4;
-  rtcDateTime.hour = 19;
+  rtcDateTime.day = 26;
+  rtcDateTime.weekday = 3;
+  rtcDateTime.hour = 0;
   rtcDateTime.minute = 54;
   rtcDateTime.second = 32;
   rtcDateTime.mode12h = true;
@@ -105,6 +105,7 @@ void setup()
   Serial.begin(9600);
   Serial.println(SKETCH);
   Serial.println("Libraries:");
+  Serial.println(gbj_apphelpers::VERSION);
   Serial.println(gbj_twowire::VERSION);
   Serial.println(gbj_memory::VERSION);
   Serial.println(gbj_ds1307::VERSION);
@@ -122,7 +123,6 @@ void setup()
     errorHandler("Datetime write");
     return;
   }
-  // delay(PERIOD_WAIT);
   // Reading datetime
   if (Device.getDateTime(rtcDateTime))
   {

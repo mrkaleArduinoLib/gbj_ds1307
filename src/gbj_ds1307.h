@@ -10,7 +10,7 @@
   it under the terms of the license GNU GPL v3 http://www.gnu.org/licenses/gpl-3.0.html
   (related to original code) and MIT License (MIT) for added code.
 
-  CREDIT:
+  CREDITS:
   BCD calculation - JeeLabs http://news.jeelabs.org/code/
 
   CREDENTIALS:
@@ -21,6 +21,7 @@
 #define GBJ_DS1307_H
 
 #include "gbj_memory.h"
+#include "gbj_apphelpers.h"
 
 
 class gbj_ds1307 : public gbj_memory
@@ -42,19 +43,7 @@ enum ConvertionRate
   SQW_RATE_32KHZ = B11,  // 32768 Hz
 };  // RS1 and RS0 bits of control register for rate select
 
-struct Datetime
-{
-  uint16_t year;
-  uint8_t month;
-  uint8_t day;
-  uint8_t hour;
-  uint8_t minute;
-  uint8_t second;
-  uint8_t weekday;
-  bool mode12h;
-  bool pm;
-};
-
+using Datetime = gbj_apphelpers::Datetime;
 
 //------------------------------------------------------------------------------
 // Public methods
@@ -103,14 +92,14 @@ uint8_t getDateTime(Datetime &dtRecord);
 
 
 /*
-  Write to time keeping registers of the chip.
+  Write to time keeping registers as well as configuration register of the chip.
 
   DESCRIPTION:
   The method sanitizes datetime taken from referenced external structure
   (datetime record) and writes it to the chip.
-  - The method strips century from the year and write just two-digit year number.
+  - The method strips century from the year and writes just two-digit year number.
   - The method writes cached value to the control register of the chip as well,
-    so that the chip can be set, start and configured at once.
+    so that the chip can be set, started and configured at once.
 
   PARAMETERS:
   dtRecord - Referenced structure variable for desired date and time.
@@ -122,6 +111,47 @@ uint8_t getDateTime(Datetime &dtRecord);
   Result code.
 */
 uint8_t setDateTime(const Datetime &dtRecord);
+
+
+/*
+  Setup clock and start it.
+
+  DESCRIPTION:
+  The particular method sets the compilation date and time to the RTC chip and
+  starts its internal oscillator.
+  - The method is overloaded, either for flash constants or for generic strings
+    pointer for date and time constants.
+  - The method sets datetime regardless the RTC chip is running or not.
+
+  PARAMETERS:
+  strDate - Pointer to a system date formatted string.
+            - Data type: char pointer
+            - Default value: none
+            - Limited range: address range
+
+  strTime - Pointer to a system time formatted string.
+            - Data type: char pointer
+            - Default value: none
+            - Limited range: address range
+
+  weekday - Number of current day in a week. It is up to an application to set
+            the starting day in the week. If weekday are irrelevant, the default
+            value may be used. The provided weekday fallbacks to valid range.
+            - Data type: positive integer
+            - Default value: 1
+            - Limited range: 1 ~ 7
+
+  mode12h - Flag about using 12 hours mode.
+            - Data type: boolean
+            - Default value: false (24 hours mode)
+            - Limited range: true = 12 hours mode, false = 24 hours mode
+
+  RETURN:
+  Result code.
+*/
+uint8_t startClock(const char* strDate, const char* strTime, uint8_t weekday = 1, bool mode12h = false);
+uint8_t startClock(const __FlashStringHelper* strDate, const __FlashStringHelper* strTime, \
+  uint8_t weekday = 1, bool mode12h = false);
 
 
 //------------------------------------------------------------------------------

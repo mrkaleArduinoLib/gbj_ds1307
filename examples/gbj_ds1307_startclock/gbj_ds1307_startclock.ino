@@ -1,10 +1,13 @@
 /*
   NAME:
-  Reading real date and time from DS1307 chip using gbjDS1307 library.
+  Setting compiler date and time to DS1307 chip and starting it.
 
   DESCRIPTION:
-  The sketch reads time keeping register and display real date and time from
-  the chip.
+  The sketch writes current date and time taken from the compiler to time keeping
+  registers and reads them back for displaying and checking.
+  - The sketch starts the clock (internal oscillator) as well regardless whether
+    the RTC is has been running or not.
+  - Overwrite weekday number to the current one for your week days sequence.
   - Connect modul's pins to microcontroller's I2C bus as described in README.md
     for used platform accordingly.
 
@@ -15,10 +18,12 @@
   CREDENTIALS:
   Author: Libor Gabaj
 */
-#define SKETCH "GBJ_DS1307_DATETIME_GET 1.0.0"
+#define SKETCH "GBJ_DS1307_STARTCLOCK 1.0.0"
 
 #include "gbj_ds1307.h"
 
+const byte weekday = 3;  // Change to current number of your counting sequence
+const char* weekdays[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
 
 // Software configuration
 gbj_ds1307 Device = gbj_ds1307();
@@ -94,7 +99,6 @@ void setup()
   Serial.begin(9600);
   Serial.println(SKETCH);
   Serial.println("Libraries:");
-  Serial.println(gbj_apphelpers::VERSION);
   Serial.println(gbj_twowire::VERSION);
   Serial.println(gbj_memory::VERSION);
   Serial.println(gbj_ds1307::VERSION);
@@ -104,6 +108,12 @@ void setup()
   if (Device.begin())
   {
     errorHandler("Begin");
+    return;
+  }
+  // Start clock
+  if (Device.startClock(__DATE__, __TIME__, weekday))
+  {
+    errorHandler("Start clock");
     return;
   }
   // Reading datetime
@@ -118,7 +128,9 @@ void setup()
   Serial.print((rtcDateTime.month < 10 ? "0" : "") + String(rtcDateTime.month) + ".");
   Serial.println(rtcDateTime.year);
   Serial.print("Week day: ");
-  Serial.println(rtcDateTime.weekday);
+  Serial.print(rtcDateTime.weekday);
+  Serial.print(" ");
+  Serial.println(weekdays[rtcDateTime.weekday - 1]);
   Serial.println("---");
   // Time
   Serial.print("Time: ");

@@ -94,6 +94,7 @@ void setup()
   Serial.begin(9600);
   Serial.println(SKETCH);
   Serial.println("Libraries:");
+  Serial.println(gbj_apphelpers::VERSION);
   Serial.println(gbj_twowire::VERSION);
   Serial.println(gbj_memory::VERSION);
   Serial.println(gbj_ds1307::VERSION);
