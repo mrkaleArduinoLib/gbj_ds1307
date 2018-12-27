@@ -1,20 +1,10 @@
 <a id="library"></a>
-# gbjTMP102
-Library for the real time clock *DS1307* communicating on two-wire (I2C) bus.
-- Sensor can have following addresses, which allows up to 4 sensors present on the same two-wire bus:
-  - `0x48` for ADD0 pin connected to GND (ground)
-  - `0x49` for ADD0 pin connected to V+ (power supply positive rail)
-  - `0x4A` for ADD0 pin connected to SDA (serial data rail of the two-wire bus)
-  - `0x4B` for ADD0 pin connected to SCL (serial clock rail of the two-wire bus)
-- The library provides measured temperature in degrees of Celsius.
-- For conversion among various temperature unit scales and for calculating dew point temperature use library *gbjAppHelpers*.
-- The sensor in normal mode has 12 bit resolution with sensitivity 0.0625 centigrade with measurement range -55 to +128 centigrade.
-- The extended mode has 13 bit resolution, but the same sensitivity and it just extends the upper temperature measurement range up to +150 centigrade.
-  - Switching (reconfiguration) to extended mode from normal mode or vice-versa needs a time delay cca 350 milliseconds after it in order to settle the sensor and stabilize the temperature conversion.
-  - Without the delay after switching to extended mode the reading is doubled to real temperature at first reading after switching mode.
-  - Without the delay after switching to normal mode the reading is halved to real temperature at first reading after switching mode.
-  - Library does not have implemented such specific delay after mode switching due to small usefulness of the extended mode.
-  - Library caches pointer and configuration register.
+# gbjDS1307
+Library for the *Dallas Semiconductor* real time clock *DS1307* chip communicating on two-wire (I2C) bus.
+- Sensor has fixed addresses `0x68`.
+- The library utilizes external custom data type from the library *gbjAppHelpers* as a datetime structure in the form of alias in own body.
+- The library does not provide any formatting and parsing functionality for datetime structures. Use the dedicated library *gbjAppHelpers* for those funcionalities.
+- Library caches configuration register of the chip.
 
 
 #### Particle hardware configuration
@@ -43,125 +33,86 @@ Library for the real time clock *DS1307* communicating on two-wire (I2C) bus.
 - **TwoWire**: I2C system library loaded from the file *Wire.h*.
 
 #### Custom Libraries
-- **gbjTwoWire**: I2C custom library loaded from the file *gbj_twowire.h*. The library [gbjTMP102](#library) inherits common bus functionality from this library.
+- **gbjMemory**: Custom library loaded from the file *gbj_memory.h* for a generic memory on two-wire (I2C) bus as a parent class for the library [gbjDS1307](#library), which inherits common memory processing functionality from this library for utilizing non-volatile, battery backed up memory of the RTC chip.
+- **gbjAppHelpers**: Custom library loaded from the file *gbj_apphelpers.h* for a generic application logic. The library [gbjDS1307](#library) utilizes custom data type from it for datetime structure definition.
 
 
 <a id="constants"></a>
 ## Constants
-- **gbj\_tmp102::VERSION**: Name and semantic version of the library.
+- **gbj\_ds1307::VERSION**: Name and semantic version of the library.
+- **gbj\_ds1307::ADDRESS**: I2C address of the RTC chip.
 
 
-<a id="addresses"></a>
-#### Addresses
-- **gbj\_tmp102::ADDRESS\_GND**: ADD0 pin connected to GND pin (default).
-- **gbj\_tmp102::ADDRESS\_VCC**: ADD0 pin connected to positive power supply rail.
-- **gbj\_tmp102::ADDRESS\_SDA**: ADD0 pin connected to serial data rail of two-wire bus.
-- **gbj\_tmp102::ADDRESS\_SCL**: ADD0 pin connected to serial clock rail of two-wire bus.
-
-
-<a id="conversions"></a>
-#### Conversion rates
-- **gbj\_tmp102::CONVERSION\_PERIOD\_4000MS**: Conversion period in milliseconds for conversion frequency 0.25 Hz.
-- **gbj\_tmp102::CONVERSION\_PERIOD\_1000MS**: Conversion period in milliseconds for conversion frequency 1 Hz.
-- **gbj\_tmp102::CONVERSION\_PERIOD\_250MS**: Conversion period in milliseconds for conversion frequency 4 Hz (default).
-- **gbj\_tmp102::CONVERSION\_PERIOD\_125MS**: Conversion period in milliseconds for conversion frequency 8 Hz.
-- **gbj\_tmp102::CONVERSION\_RATE\_025HZ**: Conversion frequency 0.25 Hz.
-- **gbj\_tmp102::CONVERSION\_RATE\_1HZ**: Conversion frequency 1 Hz.
-- **gbj\_tmp102::CONVERSION\_RATE\_4HZ**: Conversion frequency 4 Hz (default).
-- **gbj\_tmp102::CONVERSION\_RATE\_8HZ**: Conversion frequency 8 Hz.
-
-
-<a id="faults"></a>
-#### Fault queues
-- **gbj\_tmp102::FAULT\_QUEUE\_1**: 1 consecutive fault for changing ALERT pin state (default).
-- **gbj\_tmp102::FAULT\_QUEUE\_2**: 2 consecutive faults for changing ALERT pin state.
-- **gbj\_tmp102::FAULT\_QUEUE\_4**: 4 consecutive faults for changing ALERT pin state.
-- **gbj\_tmp102::FAULT\_QUEUE\_6**: 8 consecutive faults for changing ALERT pin state.
+<a id="SQW"></a>
+#### Square wave frequencies
+- **gbj\_ds1307::SQW\_RATE\_1HZ**: Square wave frequency 1 Hz.
+- **gbj\_ds1307::SQW\_RATE\_4KHZ**: Square wave frequency 4096 Hz.
+- **gbj\_ds1307::SQW\_RATE\_8KHZ**: Square wave frequency 8192 Hz.
+- **gbj\_ds1307::SQW\_RATE\_32KHZ**: Square wave frequency 32768 Hz.
 
 
 <a id="errors"></a>
 #### Error codes
-- **gbj\_tmp102::ERROR\_RESET**: Resetting failure.
-- **gbj\_tmp102::ERROR\_MEASURE\_TEMP**: Measuring temperature failure.
-
-Other error codes as well as result code are inherited from the parent library [gbjTwoWire](#dependency).
+The library does not provide any own specific error codes. All result and error codes are inhereted for the parent library [gbjMemory](#dependency).
 
 
 <a id="configuration"></a>
 ## Configuration
-The configuration of the sensor is realized by the configuration register, which consists of several configuration bits determining its behavior. The library stores (caches) the value of the configuration register in its instance object.
+The configuration of the RTC chip is realized by the configuration register, which consists of several configuration bits determining its behavior. The library stores (caches) the value of the configuration register in its instance object.
 
-The sensor configuration implemented in the library is based on updating cached configuration value in advanced and finally to send that value to the sensor and write all configuration bits to configuration register at once in order to reduce communication on the two-wire bus in contrast to sending configuration bits to the sensor individually.
+The chip configuration implemented in the library is based on updating cached configuration value in advanced by methods of the naming convention `configXXX` and finally sending that value to the chip and write all configuration bits to configuration register at once in order to reduce communication on the two-wire bus in contrast to sending configuration bits to the chip individually.
 
-It is good practice or sometimes necessary to read the configuration register right before using getters, especially those related to particular configuration bits in order to get its current value.
+Because the RTC chip does not change the content of its configuration register during operation on its own, it is not necessary to read the configuration register right before using getters. An application may rely on cached value of the configuration register.
 
 
 <a id="interface"></a>
 ## Interface
 
 #### Main
-- [gbj_tmp102()](#gbj_tmp102)
+- [gbj_ds1307()](#gbj_ds1307)
 - [begin()](#begin)
-- [reset()](#reset)
-- [measureTemperature()](#measureTemperature)
-- [measureTemperatureOneshot()](#measureTemperatureOneshot)
-- [calculateTemperature()](#calculateTemperature)
+- [startClock()](#startClock)
 
 #### Setters
+- [setDateTime()](#setDateTime)
 - [setConfiguration()](#setConfiguration)
-- [setAlertLow()](#setAlertValue)
-- [setAlertHigh()](#setAlertValue)
-- [setAlerts()](#setAlertValue)
-- [setUseValuesTyp()](#setUseValues)
-- [setUseValuesMax()](#setUseValues)
-- [configAlertActiveLow()](#configAlertMode)
-- [configAlertActiveHigh()](#configAlertMode)
-- [configExtendedMode()](#configResolutionMode)
-- [configNormalMode()](#configResolutionMode)
-- [configShutdownMode()](#configPowerMode)
-- [configContinuousMode()](#configPowerMode)
-- [configInterruptMode()](#configActionMode)
-- [configThermostatMode()](#configActionMode)
-- [configConversionRate()](#configConversionRate)
-- [configFaultQueue()](#configFaultQueue)
-- [configOneshotMode()](#configOneshotMode)
+- [configClockEnable()](#configClock)
+- [configClockDisable()](#configClock)
+- [configSqwEnable()](#configSqw)
+- [configSqwDisable()](#configSqw)
+- [configSqwLevelHigh()](#configSqwLevel)
+- [configSqwLevelLow()](#configSqwLevel)
+- [configSqwRate()](#configSqwRate)
 
 #### Getters
 - [getConfiguration()](#getConfiguration)
-- [getAlertActiveLow()](#getAlertMode)
-- [getAlertActiveHigh()](#getAlertMode)
-- [getAlertLow()](#getAlertValue)
-- [getAlertHigh()](#getAlertValue)
-- [getAlert()](#getAlert)
-- [getExtendedMode()](#getResolutionMode)
-- [getNormalMode()](#getResolutionMode)
-- [getShutdownMode()](#getPowerMode)
-- [getContinuousMode()](#getPowerMode)
-- [getInterruptMode()](#getActionMode)
-- [getThermostatMode()](#getActionMode)
-- [getConversionRate()](#getConversionRate)
-- [getFaultQueue()](#getFaultQueue)
-- [getOneshotMode()](#getOneshotMode)
-- [getErrorT()](#getErrorT)
+- [getPowerUp()](#getPowerUp)
+- [getDateTime()](#getDateTime)
+- [getClockEnabled()](#getClockEnabled)
+- [getClockMode12H()](#getClockMode12H)
+- [getSqwRate()](#getSqwRate)
+- [getSqwLevel()](#getSqwLevel)
+- [getSqwEnabled()](#getSqwEnabled)
 
-Other possible setters and getters are inherited from the parent library [gbjTwoWire](#dependency) and described there.
+Other possible setters and getters are inherited from the parent library [gbjMemory](#dependency) and described there.
 
 
-<a id="gbj_tmp102"></a>
-## gbj_tmp102()
+<a id="gbj_ds1307"></a>
+## gbj_ds1307()
 #### Description
-The library does not need special constructor and destructor, so that the inherited ones are good enough and there is no need to define them in the library, just use it with default or specific parameters as defined at constructor of parent library [gbjTwoWire](#dependency).
+The library does not need special constructor and destructor, so that the inherited ones are good enough and there is no need to define them in the library, just use it with default or specific parameters as defined at constructor of parent library [gbjMemory](#dependency).
 - Constructor sets parameters specific to the two-wire bus in general.
 - All the constructor parameters can be changed dynamically with corresponding setters later in a sketch.
+- Although the datasheet for the RTC chip claims it work on 100 kHz frequency of the two-wire bus, an experiments proved, that it works on 400 kHz frequency as well. So that the constructor does not force the 100 kHz frequency, just default it.
 
 #### Syntax
-    gbj_tmp102(uint32_t clockSpeed, uint8_t pinSDA, uint8_t pinSCL);
+    gbj_ds1307(uint32_t clockSpeed, uint8_t pinSDA, uint8_t pinSCL);
 
 #### Parameters
 <a id="prm_busClock"></a>
 - **clockSpeed**: Two-wire bus clock frequency in Hertz. If the clock is not from enumeration, it fallbacks to 100 kHz.
-  - *Valid values*: gbj\_tmp102::CLOCK\_100KHZ, gbj\_tmp102::CLOCK\_400KHZ
-  - *Default value*: gbj\_tmp102::CLOCK\_100KHZ
+  - *Valid values*: gbj\_ds1307::CLOCK\_100KHZ, gbj\_ds1307::CLOCK\_400KHZ
+  - *Default value*: gbj\_ds1307::CLOCK\_100KHZ
 
 
 <a id="prm_pinSDA"></a>
@@ -179,64 +130,17 @@ The library does not need special constructor and destructor, so that the inheri
 Object performing the sensor management.
 The constructor cannot return [a result or error code](#constants) directly, however, it stores them in the instance object. The result can be tested in the operational code with the method [getLastResult()](#getLastResult), [isError()](#isError), or [isSuccess()](#isSuccess).
 
-#### Example
-The method has all arguments defaulted and calling without any parameters is equivalent to the calling with all arguments set by corresponding constant with default value:
-
-```cpp
-  gbj_tmp102 Sensor = gbj_tmp102(); // It is equivalent to
-  gbj_tmp102 Sensor = gbj_tmp102(gbj_tmp102::CLOCK_100KHZ, D2, D1);
-```
-
 [Back to interface](#interface)
 
 
 <a id="begin"></a>
 ## begin()
 #### Description
-The method takes, sanitizes, and stores sensor parameters to a class instance object and initiates two-wire bus.
-- The method sets parameters specific to the sensor itself.
-- The method resets the sensor to its power-up state (see details in method [reset](#reset)).
-- All the method parameters can be changed dynamically with corresponding [setters](#interface) later in a sketch.
+The method initiates the RTC chip and two-wire bus.
+- The method sets parameters of non-volatile memory and reads configuration register to its cache..
 
 #### Syntax
-    uint8_t begin(uint8_t address);
-
-#### Parameters
-<a id="prm_address"></a>
-- **address**: One of four possible 7 bit addresses of the sensor.
-  - *Valid values*: [gbj\_tmp102::ADDRESS\_GND](#addresses), [gbj\_tmp102::ADDRESS\_VCC](#addresses), [gbj\_tmp102::ADDRESS\_SDA](#addresses), [gbj\_tmp102::ADDRESS\_SCL](#addresses).
-  - *Default value*: [gbj\_tmp102::ADDRESS\_GND](#addresses)
-    - The default values is set to address corresponding to grounded ADD0 pin.
-    - If input value is none of expected ones, the method fallbacks it to default address.
-    - Implementing addressing allows up to 4 sensors present on the same two-wire bus.
-    - Module boards with the sensor have usually ADD0 grounded and are equipped with soldering pad for reconnecting that pin to V+ rail.
-
-#### Returns
-Some of [result or error codes](#constants).
-
-#### See also
-[reset()](#reset)
-
-[Back to interface](#interface)
-
-
-<a id="reset"></a>
-## reset()
-#### Description
-The method resets the sensor by the general call software reset sending the code `0x06` to the two-wire bus at address `0x00` and reads the content of the configuration register to the library instance object. Software reset causes resetting all internal registers to their power-up values, which determine following configuration and values:
-- Upper alert temperature limit 80 centigrade.
-- Lower alert temperature limit 75 centigrade.
-- Normal mode (12 bit).
-- Conversion rate 4 Hz.
-- Continuous power mode (shutdown mode off).
-- Thermostat (comparator) mode.
-- Alert pin active low.
-- Alert active.
-- One fault for fault queue.
-- One-shot conversion off.
-
-#### Syntax
-    uint8_t reset();
+    uint8_t begin();
 
 #### Parameters
 None
@@ -244,81 +148,122 @@ None
 #### Returns
 Some of [result or error codes](#constants).
 
-#### See also
-[begin()](#begin)
-
 [Back to interface](#interface)
 
 
-<a id="measureTemperature"></a>
-## measureTemperature()
+<a id="startClock"></a>
+## startClock()
 #### Description
-The method measures temperature.
-- After each temperature reading the method reads the configuration register with the method [getConfiguration()](#getConfiguration) as well and its content stores in the instance object. It is essential for reading alert status with the method [getAlert()](#getAlert).
+The particular method sets the compilation date and time to the RTC chip and starts its internal oscillator.
+- The method is overloaded, either for flash constants or for generic strings pointers for date and time constants.
+- The method sets datetime regardless the RTC chip is running or not.
 
 #### Syntax
-    float measureTemperature();
+    uint8_t startClock(const char* strDate, const char* strTime, uint8_t weekday = 1, bool mode12h = false);
+    uint8_t startClock(const __FlashStringHelper* strDate, const __FlashStringHelper* strTime, uint8_t weekday = 1, bool mode12h = false);
 
 #### Parameters
-None
-
-#### Returns
-Temperature in centigrade or erroneous value returned by [getErrorT()](#getErrorT). The error code can be tested in the operational code with the method [getLastResult()](#getLastResult), [isError()](#isError), or [isSuccess()](#isSuccess).
-
-#### See also
-[measureTemperatureOneshot()](#measureTemperatureOneshot)
-
-[Back to interface](#interface)
-
-
-<a id="measureTemperatureOneshot"></a>
-## measureTemperatureOneshot()
-#### Description
-The method configures shutdown mode and one-shot conversion of the sensor. It waits until conversion finishes and returns ambient temperature in centigrade.
-- The method is useful at very long periods (couple of minutes and hours) between measurements in order to save power consumption.
-- After each temperature reading the method reads the configuration register with the method [getConfiguration()](#getConfiguration) as well and its content stores in the instance object. It is essential for reading alert status with the method [getAlert()](#getAlert).
-
-#### Syntax
-    float measureTemperatureOneshot();
-
-#### Parameters
-None
-
-#### Returns
-Temperature in centigrade or erroneous value returned by [getErrorT()](#getErrorT). The error code can be tested in the operational code with the method [getLastResult()](#getLastResult), [isError()](#isError), or [isSuccess()](#isSuccess).
-
-#### See also
-[measureTemperature()](#measureTemperature)
-
-[Back to interface](#interface)
-
-
-<a id="calculateTemperature"></a>
-## calculateTemperature()
-#### Description
-The particular method wraps a formula for calculating temperature in centigrades from 16-bit word from temperature register or vice-versa.
-- The methods are suitable for storing temperatures in EEPROM as binary word instead of as float number.
-
-#### Syntax
-    float calculateTemperature(int16_t wordMeasure);
-    int16_t calculateTemperature(float temperature);
-
-#### Parameters
-- **wordMeasure**: Temperature binary word of temperature register. If the least significant bit is set and there is extended mode bit set in configuration register, the value is considered in 13-bit resolution.
-  - *Valid values*: integer
+- __strDate__: Pointer to a system date formatted string.
+  - *Valid values*: address range
   - *Default value*: none
 
-- **temperature**: Temperature in centigrade.
-  - *Valid values*: -55.0 ~ 150.0
+
+- **strTime**: Pointer to a system time formatted string.
+  - *Valid values*: address range
+  - *Default value*: none
+
+
+- **weekday**: Number of current day in a week. It is up to an application to set the starting day in the week. If weekdays are irrelevant, the default value may be used. The provided weekday fallbacks to valid range.
+  - *Valid values*: 1 ~ 7
+  - *Default value*: 1
+
+
+- **mode12h**: Flag about using 12 hours mode.
+  - *Valid values*: true = 12 hours mode, false = 24 hours mode
+  - *Default value*: false (24 hours mode)
+
+#### Returns
+Some of [result or error codes](#constants).
+
+#### Example
+```cpp
+gbj_ds1307 Device = gbj_ds1307();
+Device.startClock(__DATE__, __TIME__, 3); // 24h mode
+Device.startClock(__DATE__, __TIME__, 3, true);  // 12h mode
+```
+
+#### See also
+[setDateTime()](#setDateTime)
+
+[Back to interface](#interface)
+
+
+<a id="setDateTime"></a>
+## setDateTime()
+#### Description
+The method sanitizes datetime parameters taken from referenced external structure (datetime record) and writes them to the RTC chip.
+- The method strips century from the year and writes just two-digit year number.
+- The method writes cached value to the control register of the chip as well, so that the chip can be set, started and configured at once.
+
+#### Syntax
+    uint8_t setDateTime(const Datetime &dtRecord);
+
+#### Parameters
+- **dtRecord**: Referenced structure variable for desired date and time defined in the library [gbjAppHelpers](#dependency) and declared in the library [gbjDS1307](#library) as an alias.
+  - *Valid values*: as described for the library [gbjAppHelpers](#dependency)
   - *Default value*: none
 
 #### Returns
-Temperature in centigrade or binary word representing temperature.
+Some of [result or error codes](#constants).
+
+#### Example
+```cpp
+gbj_ds1307 Device = gbj_ds1307();
+gbj_ds1307::Datetime rtcDateTime;
+void setup()
+{
+  rtcDateTime.year = 2018;
+  rtcDateTime.month = 12;
+  rtcDateTime.day = 26;
+  rtcDateTime.weekday = 3;
+  rtcDateTime.hour = 0;
+  rtcDateTime.minute = 54;
+  rtcDateTime.second = 32;
+  rtcDateTime.mode12h = true;
+  rtcDateTime.pm = false;
+  //
+  Device.setDateTime(rtcDateTime);
+}
+```
 
 #### See also
-[setAlertLow(), setAlertHigh(), setAlerts()](#setAlertValue)
+[getDateTime()](#getDateTime)
 
-[getAlertLow(), getAlertHigh()](#getAlertValue)
+[startClock()](#startClock)
+
+[Back to interface](#interface)
+
+
+<a id="getDateTime"></a>
+## getDateTime()
+#### Description
+The method reads datetime from the RTC chip, process it and place it to the referenced external structure (datetime record).
+- The method expects 21th century, so that adds 2000 to the read two-digit year number.
+- The method read configuration register to its cache as well.
+
+#### Syntax
+    uint8_t getDateTime(Datetime &dtRecord);
+
+#### Parameters
+- **dtRecord**: Referenced structure variable for placing read date and time defined in the library [gbjAppHelpers](#dependency) and declared in the library [gbjDS1307](#library) as an alias.
+  - *Valid values*: as described for the library [gbjAppHelpers](#dependency)
+  - *Default value*: none
+
+#### Returns
+Some of [result or error codes](#constants).
+
+#### See also
+[setDateTime()](#setDateTime)
 
 [Back to interface](#interface)
 
@@ -326,7 +271,7 @@ Temperature in centigrade or binary word representing temperature.
 <a id="setConfiguration"></a>
 ## setConfiguration()
 #### Description
-The method writes the new content of the configuration register stored in the instance object (configuration cache) to the sensor. This content should has been prepared by methods of type `configXXX` right before.
+The method writes the new content of the configuration register stored in the instance object (configuration cache) to the chip. This content should has been prepared by methods of names `configXXX` right before.
 
 #### Syntax
     uint8_t setConfiguration();
@@ -346,7 +291,7 @@ Some of [result or error codes](#constants).
 <a id="getConfiguration"></a>
 ## getConfiguration()
 #### Description
-The method reads configuration register and its value stores in the instance object, so that it caches it and enables it for corresponding getters.
+The method provides content of the configuration register from its cache read or updated recently.
 
 #### Syntax
     uint8_t getConfiguration();
@@ -355,7 +300,7 @@ The method reads configuration register and its value stores in the instance obj
 None
 
 #### Returns
-Some of [result or error codes](#constants).
+Content of the configuration register cache.
 
 #### See also
 [setConfiguration()](#setConfiguration)
@@ -363,412 +308,14 @@ Some of [result or error codes](#constants).
 [Back to interface](#interface)
 
 
-<a id="setAlertValue"></a>
-## setAlertLow(), setAlertHigh(), setAlerts()
+<a id="configClock"></a>
+## configClockEnable(), configClockDisable()
 #### Description
-The particular method writes either lower or upper temperature limit, or both at once to the sensor.
-- A method for particular temperature limit does not check its relation to the related limit. It should be done in a sketch. So that, those methods allows to set high limit less than low limit.
-- If both limits are set at once, they are sorted ascending at first.
+The particular method sets or resets *clock halt* (CH) bit of the seconds time keeping register. After setting date and time to the chip, its internal oscillator is started or stopped and real time clock is running or halted.
 
 #### Syntax
-    uint8_t setAlertLow(float temperatureLow);
-    uint8_t setAlertHigh(float temperatureHigh);
-    uint8_t setAlerts(float temperatureLow, float temperatureHigh);
-
-#### Parameters
-- **temperatureLow**, **temperatureHigh**: Particular temperature limit in centigrade.
-  - *Valid values*: -55.0 ~ 150.0
-  - *Default value*: none
-
-#### Returns
-Some of [result or error codes](#constants).
-
-#### See also
-[getAlertLow(), getAlertHigh()](#getAlertValue)
-
-[Back to interface](#interface)
-
-
-<a id="getAlertValue"></a>
-## getAlertLow(), getAlertHigh()
-#### Description
-The particular method reads upper or lower temperature limit from the sensor.
-
-#### Syntax
-    float getAlertLow();
-    float getAlertHigh();
-
-#### Parameters
-None
-
-#### Returns
-Lower or upper temperature limit in centigrade or erroneous value returned by [getErrorT()](#getErrorT). The error code can be tested in the operational code with the method [getLastResult()](#getLastResult), [isError()](#isError), or [isSuccess()](#isSuccess).
-
-#### See also
-[setAlertLow(), setAlertHigh(), setAlerts()](#setAlertValue)
-
-[Back to interface](#interface)
-
-
-<a id="configAlertMode"></a>
-## configAlertActiveLow(), configAlertActiveHigh()
-#### Description
-The particular method updates alert activity bit state in the cached configuration value before its sending to the sensor by the method [setConfiguration()](#setConfiguration).
-
-#### Syntax
-    void configAlertActiveLow();
-    void configAlertActiveHigh();
-
-#### Parameters
-None
-
-#### Returns
-None
-
-#### See also
-[getAlertActiveLow(), getAlertActiveHigh()](#getAlertMode)
-
-[setConfiguration()](#setConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="getAlertMode"></a>
-## getAlertActiveLow(), getAlertActiveHigh()
-#### Description
-The particular method determines flag about alert activity mode from the cached configuration value.
-
-#### Syntax
-    bool getAlertActiveLow();
-    bool getAlertActiveHigh();
-
-#### Parameters
-None
-
-#### Returns
-Flag about set particular alert activity mode.
-
-#### See also
-[configAlertActiveLow(), configAlertActiveHigh()](#configAlertMode)
-
-[getConfiguration()](#getConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="getAlert"></a>
-## getAlert()
-#### Description
-The method provides flag about state of alert pin from cached configuration value.
-- It is suitable for detecting the alert by software without need of hardware sensing the ALERT pin of the sensor.
-
-#### Syntax
-    bool getAlert();
-
-#### Parameters
-None
-
-#### Returns
-Flag about ALERT pin state.
-
-#### See also
-[getConfiguration()](#getConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="configResolutionMode"></a>
-## configExtendedMode(), configNormalMode()
-#### Description
-The particular method turns on corresponding resolution mode in the cached configuration value before its sending to the sensor by the method [setConfiguration()](#setConfiguration).
-- At *normal* mode the resolution is the 12-bit resolution.
-- At *extended* mode the resolution is the 13-bit resolution.
-- Extended mode does not increase sensitivity, just extents the upper temperature measurement range from +128 to +150 centigrades. So that in normal working conditions it is not very useful.
-- After changing resolution mode and writing it to the sensor it is needed to wait cca 350 milliseconds in order to settle the sensor and provide conversion. Otherwise the first conversion after changing resolution to extended mode from normal one doubles the measured temperature and after changing to normal mode from extended one halves the temperature, which might confuse follow-up logic or controlling mechanizm.
-- The library does not have extra delay after resolution change implemented, so that it must be enforced in a sketch.
-
-#### Syntax
-    void configExtendedMode();
-    void configNormalMode();
-
-#### Parameters
-None
-
-#### Returns
-None
-
-#### See also
-[getExtendedMode(), getNormalMode()](#getResolutionMode)
-
-[setConfiguration()](#setConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="getResolutionMode"></a>
-## getExtendedMode(), getNormalMode()
-#### Description
-The particular method determines flag about resolution mode state from the cached configuration value.
-
-#### Syntax
-    bool getExtendedMode();
-    bool getNormalMode();
-
-#### Parameters
-None
-
-#### Returns
-Flag about set particular resolution mode.
-
-#### See also
-[configExtendedMode(), configNormalMode()](#configResolutionMode)
-
-[getConfiguration()](#getConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="configPowerMode"></a>
-## configShutdownMode(), configContinuousMode()
-#### Description
-The particular method turns on corresponding power mode in the cached configuration value before its sending to the sensor by the method [setConfiguration()](#setConfiguration).
-- At *shutdown* mode the sensor turns on all its system except the serial interface and reduces power consumption. This mode is utilized by the method [measurementTemperatureOneshot()](#measurementTemperatureOneshot) for one-shot temperature measurement.
-- At *continuous* mode the sensor performs continuous temperature conversion according to its [current conversion rate](#getConversionRate).
-
-#### Syntax
-    void configShutdownMode();
-    void configContinuousMode();
-
-#### Parameters
-None
-
-#### Returns
-None
-
-#### See also
-[getShutdownMode(), getContinuousMode()](#getPowerMode)
-
-[setConfiguration()](#setConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="getPowerMode"></a>
-## getShutdownMode(), getContinuousMode()
-#### Description
-The particular method determines flag about power mode state from the cached configuration value.
-
-#### Syntax
-    bool getShutdownMode();
-    bool getContinuousMode();
-
-#### Parameters
-None
-
-#### Returns
-Flag about set particular power mode.
-
-#### See also
-[configShutdownMode(), configContinuousMode()](#configPowerMode)
-
-[getConfiguration()](#getConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="configActionMode"></a>
-## configInterruptMode(), configThermostatMode()
-#### Description
-The particular method turns on corresponding action mode in the cached configuration value before its sending to the sensor by the method [setConfiguration()](#setConfiguration).
-- At *interruption* mode the sensor generates a short impulse on ALERT pin at reaching particular temperature limit with particular polarity according to the [alert activity mode](#configAlertActivityMode).
-- At *termostat* mode the sensor changes state of ALERT pin at reaching a temperature limit with particular polarity according to the [alert activity mode](#configAlertActivityMode) and keeps it until reaching another temperature limit.
-
-#### Syntax
-    void configInterruptMode();
-    void configThermostatMode();
-
-#### Parameters
-None
-
-#### Returns
-None
-
-#### See also
-[getInterruptMode(), getThermostatMode()](#getActionMode)
-
-[setConfiguration()](#setConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="getActionMode"></a>
-## getInterruptMode(), getThermostatMode()
-#### Description
-The particular method determines flag about action mode state from the cached configuration value.
-
-#### Syntax
-    bool getInterruptMode();
-    bool getThermostatMode();
-
-#### Parameters
-None
-
-#### Returns
-Flag about set particular action mode.
-
-#### See also
-[configInterruptMode(), configThermostatMode()](#configActionMode)
-
-[getConfiguration()](#getConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="configConversionRate"></a>
-## configConversionRate()
-#### Description
-The method sets conversion rate bits in the cached configuration value before its sending to the sensor by the method [setConfiguration()](#setConfiguration). The rate is determined with corresponding library class constant.
-
-#### Syntax
-    void configConversionRate(uint8_t conversionRate);
-
-#### Parameters
-- **conversionRate**: Value determining conversion rate. It fallbacks to least significant 2 bits.
-  - *Valid values*: [gbj\_tmp102::CONVERSION\_RATE\_025HZ](#conversions) ~ [gbj\_tmp102::CONVERSION\_RATE\_8HZ](#conversions) or [gbj\_tmp102::CONVERSION\_PERIOD\_4000MS](#conversions) ~ [gbj\_tmp102::CONVERSION\_PERIOD\_125MS](#conversions)
-  - *Default value*: none
-
-#### Returns
-None
-
-#### See also
-[getConversionRate()](#getConversionRate)
-
-[setConfiguration()](#setConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="getConversionRate"></a>
-## getConversionRate()
-#### Description
-The method provides current conversion rate in form of value of pair of conversion rate bits from the cached configuration value. That value can be compared to corresponding library class constants in order to determine conversion frequency or period.
-
-#### Syntax
-    uint8_t getConversionRate();
-
-#### Parameters
-None
-
-#### Returns
-One of constants from ranges [gbj\_tmp102::CONVERSION\_RATE\_025HZ](#conversions) ~ [gbj\_tmp102::CONVERSION\_RATE\_8HZ](#conversions) or [gbj\_tmp102::CONVERSION\_PERIOD\_4000MS](#conversions) ~ [gbj\_tmp102::CONVERSION\_PERIOD\_125MS](#conversions).
-
-#### See also
-[configConversionRate()](#configConversionRate)
-
-[getConfiguration()](#getConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="configFaultQueue"></a>
-## configFaultQueue()
-#### Description
-The method sets fault queue bits in the cached configuration value before its sending to the sensor by the method [setConfiguration()](#setConfiguration). The queue is determined with corresponding library class constant and states the number of consecutive faults for triggering ALERT pin change.
-
-#### Syntax
-    void configFaultQueue(uint8_t faults);
-
-#### Parameters
-- **faults**: Value determining consecutive faults for alerting. It fallbacks to least significant 2 bits.
-  - *Valid values*: [gbj\_tmp102::FAULT\_QUEUE\_1](#conversions) ~ [gbj\_tmp102::FAULT\_QUEUE\_6](#conversions)
-  - *Default value*: none
-
-#### Returns
-None
-
-#### See also
-[getFaultQueue()](#getFaultQueue)
-
-[setConfiguration()](#setConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="getFaultQueue"></a>
-## getFaultQueue()
-#### Description
-The method provides current consecutive faults in form of value of pair of fault queue bits from the cached configuration value. That value can be compared to corresponding library class constants in order to determine number of consecutive faults.
-
-#### Syntax
-    uint8_t getFaultQueue();
-
-#### Parameters
-None
-
-#### Returns
-One of constants from range [gbj\_tmp102::FAULT\_QUEUE\_1](#conversions) ~ [gbj\_tmp102::FAULT\_QUEUE\_6](#conversions).
-
-#### See also
-[configFaultQueue()](#configFaultQueue)
-
-[getConfiguration()](#getConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="configOneshotMode"></a>
-## configOneshotMode()
-#### Description
-The method turns on one-shot temperature measurement mode in the cached configuration value before its sending to the sensor by the method [setConfiguration()](#setConfiguration).
-- This mode is utilized by the method [measurementTemperatureOneshot()](#measurementTemperatureOneshot) for one-shot temperature measurement.
-
-#### Syntax
-    void configOneshotMode();
-
-#### Parameters
-None
-
-#### Returns
-None
-
-#### See also
-[getOneshotMode()](#getOneshotMode)
-
-[setConfiguration()](#setConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="getOneshotMode"></a>
-## getOneshotMode()
-#### Description
-The method provides current consecutive faults in form of value of pair of fault queue bits from the cached configuration value. That value can be compared to corresponding library class constants in order to determine number of consecutive faults.
-
-#### Syntax
-    bool getOneshotMode();
-
-#### Parameters
-None
-
-#### Returns
-Flag about set one-shot measurement mode.
-
-#### See also
-[configOneshotMode()](#configOneshotMode)
-
-[getConfiguration()](#getConfiguration)
-
-[Back to interface](#interface)
-
-
-<a id="setUseValues"></a>
-## setUseValuesTyp(), setUseValuesMax()
-#### Description
-The particular method sets the internal flag whether typical or maximal values from the datasheet should be used regarding conversion and reset times.
-
-#### Syntax
-    void setUseValuesTyp();
-    void setUseValuesMax();
+    void configClockEnable();
+    void configClockDisable();
 
 #### Parameters
 None
@@ -779,21 +326,183 @@ None
 [Back to interface](#interface)
 
 
-<a id="getErrorT"></a>
-## getErrorT()
+<a id="configSqw"></a>
+## configSqwEnable(), configSqwDisable()
 #### Description
-The method returns virtually wrong temperature value at erroneous measurement usually at failure of two-wire bus.
+The particular method sets or resets *square wave enable* (SQWE) bit in the configuration register cache. After sending that cached value to the chip, the generating of square wave signal on the SQW/OUT pin of the chip starts or stops.
 
 #### Syntax
-    float getErrorT();
+    void configSqwEnable();
+    void configSqwDisable();
 
 #### Parameters
 None
 
 #### Returns
-Erroneous temperature.
+None
 
 #### See also
-[measureTemperature()](#measureTemperature)
+[configSqwLevelHigh(), configSqwLevelLow()](#configSqwLevel)
+
+[configSqwRate()](#configSqwRate)
+
+[Back to interface](#interface)
+
+
+<a id="configSqwLevel"></a>
+## configSqwLevelHigh(), configSqwLevelLow()
+#### Description
+The particular method sets or resets *output control* (OUT) bit in the configuration register cache. It determines stable level of the SQW/OUT pin of the chip when generating square wave signal is disabled.
+
+#### Syntax
+    void configSqwLevelHigh();
+    void configSqwLevelLow();
+
+#### Parameters
+None
+
+#### Returns
+None
+
+#### See also
+[configSqwEnable(), configSqwDisable()](#configSqw)
+
+[Back to interface](#interface)
+
+
+<a id="configSqwRate"></a>
+## configSqwRate()
+#### Description
+The method sets *rate select* (RS0, RS1) bits in the configuration register cache. It determines frequency of the generated square wave signal on the SQW/OUT pin when the generating is enabled. The particular frequency is determined by corresponding library [constant](#SQW).
+
+#### Syntax
+    void configSqwRate(uint8_t rate);
+
+#### Parameters
+- **rate**: Value of pair of RS1 and RS0 bits. It fallbacks to least significant 2 bits.
+  - *Valid values*: [gbj\_ds1307::SQW\_RATE\_1HZ ~ gbj\_ds1307::SQW\_RATE\_32KHZ](#SQW)
+  - *Default value*: None
+
+#### Returns
+None
+
+#### See also
+[configSqwEnable(), configSqwDisable()](#configSqw)
+
+[Back to interface](#interface)
+
+
+<a id="getPowerUp"></a>
+## getPowerUp()
+#### Description
+The method provides flag determining that the configuration register has the value typical for its power-up content. It does not necessary mean, that the chip has been turned off and on, just the configuration register values in the same.
+
+#### Syntax
+    bool getPowerUp();
+
+#### Parameters
+None
+
+#### Returns
+Flag about content of the configuration register typical for power-up state.
+
+[Back to interface](#interface)
+
+
+<a id="getClockEnabled"></a>
+## getSqwEnabled()
+#### Description
+The method provides flag whether the CH bit of the seconds time keeping register is set or not, i.e., whether the internal oscillator of the chip and real time clock is running or not.
+
+#### Syntax
+    bool getClockEnabled();
+
+#### Parameters
+None
+
+#### Returns
+Flag about running real time clock.
+
+#### See also
+[configClockEnable(), configClockDisable()](#configClock)
+
+[Back to interface](#interface)
+
+
+<a id="getClockMode12H"></a>
+## getClockMode12H()
+#### Description
+The method provides flag whether the 12 hours mode bit in the hours time keeping register is set or not, i.e., whether the time is expressed in 12 or 24 hours form.
+
+#### Syntax
+    bool getClockMode12H();
+
+#### Parameters
+None
+
+#### Returns
+Flag about active 12 hours mode.
+
+[Back to interface](#interface)
+
+
+<a id="getSqwRate"></a>
+## getSqwRate()
+#### Description
+The method provides current set square wave frequency regardless if the generating is enabled and running or not.
+
+#### Syntax
+    uint8_t getSqwRate();
+
+#### Parameters
+None
+
+#### Returns
+SQW frequency in form of one of the library constants [gbj\_ds1307::SQW\_RATE\_1HZ ~ gbj\_ds1307::SQW\_RATE\_32KHZ](#SQW).
+
+#### See also
+[configSqwRate()](#configSqwRate)
+
+[Back to interface](#interface)
+
+
+<a id="getSqwLevel"></a>
+## getSqwLevel()
+#### Description
+The method provides set output level of the SQW/OUT pin of the chip when the generating of square wave signal is disabled.
+
+#### Syntax
+    uint8_t getSqwLevel();
+
+#### Parameters
+None
+
+#### Returns
+Output level 1 or 0, i.e., HIGH or LOW.
+
+#### See also
+[configSqwLevelHigh(), configSqwLevelLow()](#configSqwLevel)
+
+[configSqwEnable(), configSqwDisable()](#configSqw)
+
+[Back to interface](#interface)
+
+
+<a id="getSqwEnabled"></a>
+## getSqwEnabled()
+#### Description
+The method provides flag whether the SQWE bit of the configuration register is set or not, i.e., whether the generating of the square wave signal is enabled or not.
+
+#### Syntax
+    bool getSqwEnabled();
+
+#### Parameters
+None
+
+#### Returns
+Flag about enabled square wave signal generation.
+
+#### See also
+[configSqwEnable(), configSqwDisable()](#configSqw)
 
 [Back to interface](#interface)

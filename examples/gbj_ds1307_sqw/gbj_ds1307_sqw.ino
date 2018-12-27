@@ -1,13 +1,9 @@
 /*
   NAME:
-  Setting compiler date and time to DS1307 chip and starting it.
+  Generating square wave signal by DS1307 chip using gbjDS1307 library.
 
   DESCRIPTION:
-  The sketch writes current date and time taken from the compiler to time keeping
-  registers and reads them back for displaying and checking.
-  - The sketch starts the clock (internal oscillator) as well regardless whether
-    the RTC is has been running or not.
-  - Overwrite weekday number to the current one for your week days sequence.
+  The sketch sets generating the square wave signal of the particular frequency.
   - Connect modul's pins to microcontroller's I2C bus as described in README.md
     for used platform accordingly.
 
@@ -18,18 +14,14 @@
   CREDENTIALS:
   Author: Libor Gabaj
 */
-#define SKETCH "GBJ_DS1307_STARTCLOCK 1.0.0"
+#define SKETCH "GBJ_DS1307_DATETIME_SQW 1.0.0"
 
 #include "gbj_ds1307.h"
 
-const byte weekday = 3;  // Change to current number of your counting sequence
-const char* weekdays[7] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
 
 // Software configuration
 gbj_ds1307 Device = gbj_ds1307();
-// gbj_ds1307 Device = gbj_ds1307(gbj_ds1307::CLOCK_100KHZ, D2, D1);
-// gbj_ds1307 Device = gbj_ds1307(gbj_ds1307::CLOCK_400KHZ);
-gbj_ds1307::Datetime rtcDateTime;
+// gbj_ds1307 Device = gbj_ds1307(D2, D1);
 
 
 void errorHandler(String location)
@@ -100,6 +92,7 @@ void setup()
   Serial.begin(9600);
   Serial.println(SKETCH);
   Serial.println("Libraries:");
+  Serial.println(gbj_apphelpers::VERSION);
   Serial.println(gbj_twowire::VERSION);
   Serial.println(gbj_memory::VERSION);
   Serial.println(gbj_ds1307::VERSION);
@@ -111,37 +104,31 @@ void setup()
     errorHandler("Begin");
     return;
   }
-  // Start clock
-  if (Device.startClock(__DATE__, __TIME__, weekday))
+  // SQW Generating
+  Device.configSqwRate(gbj_ds1307::SQW_RATE_32KHZ);
+  Device.configSqwEnable();
+  if (Device.setConfiguration())
   {
-    errorHandler("Start clock");
+    errorHandler("Set configuration");
     return;
   }
-  // Reading datetime
-  if (Device.getDateTime(rtcDateTime))
-  {
-    errorHandler("Datetime read");
-    return;
+  // Frequency
+  Serial.print("Frequency: ");
+  switch (Device.getSqwRate()) {
+    case gbj_ds1307::SQW_RATE_1HZ:
+      Serial.print("1");
+      break;
+    case gbj_ds1307::SQW_RATE_4KHZ:
+      Serial.print("4096");
+      break;
+    case gbj_ds1307::SQW_RATE_8KHZ:
+      Serial.print("8162");
+      break;
+    case gbj_ds1307::SQW_RATE_32KHZ:
+      Serial.print("32768");
+      break;
   }
-  // Date
-  Serial.print("Date: ");
-  Serial.print((rtcDateTime.day < 10 ? "0" : "") + String(rtcDateTime.day) + ".");
-  Serial.print((rtcDateTime.month < 10 ? "0" : "") + String(rtcDateTime.month) + ".");
-  Serial.println(rtcDateTime.year);
-  Serial.print("Week day: ");
-  Serial.print(rtcDateTime.weekday);
-  Serial.print(" ");
-  Serial.println(weekdays[rtcDateTime.weekday - 1]);
-  Serial.println("---");
-  // Time
-  Serial.print("Time: ");
-  Serial.print((rtcDateTime.hour < 10 ? "0" : "") + String(rtcDateTime.hour) + ":");
-  Serial.print((rtcDateTime.minute < 10 ? "0" : "") + String(rtcDateTime.minute) + ":");
-  Serial.print((rtcDateTime.second < 10 ? "0" : "") + String(rtcDateTime.second));
-  Serial.println(rtcDateTime.mode12h ? (rtcDateTime.pm ? " PM" : " AM") : "");
-  Serial.print("Clock mode: ");
-  Serial.print(rtcDateTime.mode12h ? "12" : "24");
-  Serial.println(" hours");
+  Serial.println(" Hz");
   Serial.println("---");
   Serial.println("END");
 }

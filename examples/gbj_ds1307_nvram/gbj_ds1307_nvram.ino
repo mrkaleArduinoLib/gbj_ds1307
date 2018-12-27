@@ -1,7 +1,7 @@
 /*
   NAME:
-  Usage of battery backed up random access memory of DS1307 chip using
-  gbjDS1307 library.
+  Usage of battery backed up non-volatile random access memory of DS1307 chip
+  using gbjDS1307 library.
 
   DESCRIPTION:
   The sketch writes a byte, integer, and float number to the chip's RAM and
@@ -16,14 +16,15 @@
   CREDENTIALS:
   Author: Libor Gabaj
 */
-#define SKETCH "GBJ_DS1307_RAM 1.0.0"
+#define SKETCH "GBJ_DS1307_NVRAM 1.0.0"
 
 #include "gbj_ds1307.h"
 
 
 // Software configuration
 gbj_ds1307 Device = gbj_ds1307();
-// gbj_ds1307 Device = gbj_ds1307(D2, D1);
+// gbj_ds1307 Device = gbj_ds1307(gbj_ds1307::CLOCK_100KHZ, D2, D1);
+// gbj_ds1307 Device = gbj_ds1307(gbj_ds1307::CLOCK_400KHZ);
 
 const unsigned int POSITION = 0;
 byte valueByte = 0xAA;

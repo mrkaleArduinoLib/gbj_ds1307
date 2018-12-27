@@ -22,7 +22,8 @@
 
 // Software configuration
 gbj_ds1307 Device = gbj_ds1307();
-// gbj_ds1307 Device = gbj_ds1307(D2, D1);
+// gbj_ds1307 Device = gbj_ds1307(gbj_ds1307::CLOCK_100KHZ, D2, D1);
+// gbj_ds1307 Device = gbj_ds1307(gbj_ds1307::CLOCK_400KHZ);
 gbj_ds1307::Datetime rtcDateTime;
 
 

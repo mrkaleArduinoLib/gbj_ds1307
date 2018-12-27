@@ -1,4 +1,4 @@
-#######################################
+ #######################################
 # Syntax Coloring Map
 #######################################
 
@@ -22,9 +22,9 @@ configSqwLevelHigh	KEYWORD2
 configSqwLevelLow	KEYWORD2
 configSqwEnable	KEYWORD2
 configSqwDisable	KEYWORD2
-configRate	KEYWORD2
-getControlReg	KEYWORD2
-getRate	KEYWORD2
+configSqwRate	KEYWORD2
+getConfiguration	KEYWORD2
+getSqwRate	KEYWORD2
 getSqwLevel	KEYWORD2
 getPowerUp	KEYWORD2
 getSqwEnabled	KEYWORD2

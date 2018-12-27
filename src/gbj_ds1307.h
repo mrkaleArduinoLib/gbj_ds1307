@@ -35,7 +35,7 @@ enum Addresses
 {
   ADDRESS = 0x68,
 };
-enum ConvertionRate
+enum SquareWaveFrequency
 {
   SQW_RATE_1HZ = B00,  // 1 Hz
   SQW_RATE_4KHZ = B01,  // 4096 Hz
@@ -43,7 +43,7 @@ enum ConvertionRate
   SQW_RATE_32KHZ = B11,  // 32768 Hz
 };  // RS1 and RS0 bits of control register for rate select
 
-using Datetime = gbj_apphelpers::Datetime;
+using Datetime = gbj_apphelpers::Datetime;  // External datetime structure
 
 //------------------------------------------------------------------------------
 // Public methods
@@ -51,8 +51,8 @@ using Datetime = gbj_apphelpers::Datetime;
 /*
   Constructor taken from parent class.
 */
-gbj_ds1307(uint8_t pinSDA = 4, uint8_t pinSCL = 5) \
-: gbj_memory(CLOCK_100KHZ, pinSDA, pinSCL) {};
+gbj_ds1307(uint32_t clockSpeed = CLOCK_100KHZ, uint8_t pinSDA = 4, uint8_t pinSCL = 5) \
+: gbj_memory(clockSpeed, pinSDA, pinSCL) {};
 
 
 /*
@@ -76,7 +76,7 @@ uint8_t begin();
   DESCRIPTION:
   The method reads datetime from the chip, process it and place it to the
   referenced external structure (datetime record).
-  - The method expects 21th century, so that add 2000 to the read two-digit
+  - The method expects 21th century, so that adds 2000 to the read two-digit
   year number.
 
   PARAMETERS:
@@ -120,7 +120,7 @@ uint8_t setDateTime(const Datetime &dtRecord);
   The particular method sets the compilation date and time to the RTC chip and
   starts its internal oscillator.
   - The method is overloaded, either for flash constants or for generic strings
-    pointer for date and time constants.
+    pointers for date and time constants.
   - The method sets datetime regardless the RTC chip is running or not.
 
   PARAMETERS:
@@ -135,7 +135,7 @@ uint8_t setDateTime(const Datetime &dtRecord);
             - Limited range: address range
 
   weekday - Number of current day in a week. It is up to an application to set
-            the starting day in the week. If weekday are irrelevant, the default
+            the starting day in the week. If weekdays are irrelevant, the default
             value may be used. The provided weekday fallbacks to valid range.
             - Data type: positive integer
             - Default value: 1
@@ -193,39 +193,24 @@ inline void configSqwDisable() { _rtcRecord.control &= ~(1 << CONFIG_SQWE); };
   rate - Value of pair of RS1 and RS0 bits. It fallbacks to least significant
          2 bits.
          - Data type: non-negative integer
-         - Default value: none
+         - Default value: None
          - Limited range: SQW_RATE_1HZ ~ SQW_RATE_32KHZ
 
   RETURN: none
 */
-void configRate(uint8_t rate);
+void configSqwRate(uint8_t rate);
 
 
 //------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
-inline uint8_t getControlReg() { return _rtcRecord.control; };
-inline uint8_t getRate() { return (_rtcRecord.control >> CONFIG_RS0) & B11; };
+inline uint8_t getConfiguration() { return _rtcRecord.control; };
+inline uint8_t getSqwRate() { return (_rtcRecord.control >> CONFIG_RS0) & B11; };
 inline uint8_t getSqwLevel() { return (_rtcRecord.control >> CONFIG_OUT) & B1; };
 inline bool getPowerUp() { return _rtcRecord.control == PARAM_POWERUP; };
 inline bool getSqwEnabled() { return ((_rtcRecord.control >> CONFIG_SQWE) & B1) == 1; };
 inline bool getClockEnabled() { return ((_rtcRecord.second >> CONFIG_CH) & B1) == 0; };
 inline bool getClockMode12H() { return ((_rtcRecord.hour >> CONFIG_12H) & B1) == 1; };
-
-
-/*
-  Read control register value from the device.
-
-  DESCRIPTION:
-  The method reads control register and its value stores in the instance
-  object, so that it caches it.
-
-  PARAMETERS: none
-
-  RETURN:
-  Result code.
-*/
-uint8_t getConfiguration();
 
 
 private:

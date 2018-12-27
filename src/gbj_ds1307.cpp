@@ -100,7 +100,7 @@ uint8_t gbj_ds1307::setConfiguration()
 }
 
 
-void gbj_ds1307::configRate(uint8_t rate)
+void gbj_ds1307::configSqwRate(uint8_t rate)
 {
   _rtcRecord.control &= ~(B11 << CONFIG_RS0);  // Clear bits
   _rtcRecord.control |= ((rate & B11) << CONFIG_RS0);  // Set bits
