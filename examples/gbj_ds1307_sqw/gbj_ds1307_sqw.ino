@@ -80,6 +80,10 @@ void errorHandler(String location)
 #endif
 
     // Device specific
+    case gbj_ds1307::ERROR_POSITION:
+      Serial.println("ERROR_POSITION");
+      break;
+
     default:
       Serial.println("Uknown error");
       break;
