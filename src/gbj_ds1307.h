@@ -117,11 +117,13 @@ uint8_t setDateTime(const Datetime &dtRecord);
   Setup clock and start it.
 
   DESCRIPTION:
-  The particular method sets the compilation date and time to the RTC chip and
-  starts its internal oscillator.
-  - The method is overloaded, either for flash constants or for generic strings
-    pointers for date and time constants.
+  The particular method sets the date and time to the RTC chip and starts its
+  internal oscillator.
+  - The method is overloaded, either for flashed strings or strings
+    in SRAM pointers for date and time.
   - The method sets datetime regardless the RTC chip is running or not.
+  - If no input parameters are used, just the CH bit is reset with retaining
+    current second.
 
   PARAMETERS:
   strDate - Pointer to a system date formatted string.
@@ -152,6 +154,45 @@ uint8_t setDateTime(const Datetime &dtRecord);
 uint8_t startClock(const char* strDate, const char* strTime, uint8_t weekday = 1, bool mode12h = false);
 uint8_t startClock(const __FlashStringHelper* strDate, const __FlashStringHelper* strTime, \
   uint8_t weekday = 1, bool mode12h = false);
+uint8_t  startClock();
+
+
+/*
+  Stop clock.
+
+  DESCRIPTION:
+  The method resets clock halt (CH) bit of the seconds time keeping register
+  with retaining current second in it.
+
+  PARAMETERS: none
+
+  RETURN:
+  Result code.
+*/
+uint8_t  stopClock();
+
+
+/*
+  Start generating square wave signal.
+
+  DESCRIPTION:
+  The method enables generating square wave signal on SQW/OUT pin of the RTC
+  chip at frequency determined by the input parameter and starts the clock.
+  - The method sends new value of the control register or seconds time keeping
+    register to the chip only if cached value differs from desired one in order
+    to avoid useless communication on the two-wire bus.
+
+  PARAMETERS:
+  rate - Value of pair of RS1 and RS0 bits. It fallbacks to least significant
+         2 bits.
+         - Data type: non-negative integer
+         - Default value: SQW_RATE_32KHZ
+         - Limited range: SQW_RATE_1HZ ~ SQW_RATE_32KHZ
+
+  RETURN:
+  Result code.
+*/
+uint8_t startSqw(uint8_t rate = SQW_RATE_32KHZ);
 
 
 //------------------------------------------------------------------------------
@@ -164,7 +205,7 @@ uint8_t startClock(const __FlashStringHelper* strDate, const __FlashStringHelper
   The method sends prepared control register value to the device's control
   register.
 
-  PARAMETERS: None
+  PARAMETERS: none
 
   RETURN:
   Result code.
@@ -193,7 +234,7 @@ inline void configSqwDisable() { _rtcRecord.control &= ~(1 << CONFIG_SQWE); };
   rate - Value of pair of RS1 and RS0 bits. It fallbacks to least significant
          2 bits.
          - Data type: non-negative integer
-         - Default value: None
+         - Default value: none
          - Limited range: SQW_RATE_1HZ ~ SQW_RATE_32KHZ
 
   RETURN: none

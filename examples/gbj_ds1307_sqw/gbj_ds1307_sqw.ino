@@ -109,11 +109,9 @@ void setup()
     return;
   }
   // SQW Generating
-  Device.configSqwRate(gbj_ds1307::SQW_RATE_32KHZ);
-  Device.configSqwEnable();
-  if (Device.setConfiguration())
+  if (Device.startSqw(gbj_ds1307::SQW_RATE_4KHZ))
   {
-    errorHandler("Set configuration");
+    errorHandler("Start SQW");
     return;
   }
   // Frequency

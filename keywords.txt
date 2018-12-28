@@ -12,6 +12,8 @@ gbj_ds1307	KEYWORD1
 #######################################
 begin	KEYWORD2
 startClock	KEYWORD2
+stopClock	KEYWORD2
+startSqw	KEYWORD2
 getDateTime	KEYWORD2
 setDateTime	KEYWORD2
 getConfiguration	KEYWORD2

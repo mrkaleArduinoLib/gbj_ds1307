@@ -58,11 +58,11 @@ The library does not provide any own specific error codes. All result and error 
 
 <a id="configuration"></a>
 ## Configuration
-The configuration of the RTC chip is realized by the configuration register, which consists of several configuration bits determining its behavior. The library stores (caches) the value of the configuration register in its instance object.
+The configuration of the RTC chip is realized by the configuration register, which consists of several configuration bits determining its behavior and time keeping registers for seconds and hours determining running and form of time expression. The library stores (caches) the value of those registers in its instance object.
 
-The chip configuration implemented in the library is based on updating cached configuration value in advanced by methods of the naming convention `configXXX` and finally sending that value to the chip and write all configuration bits to configuration register at once in order to reduce communication on the two-wire bus in contrast to sending configuration bits to the chip individually.
+The chip configuration implemented in the library is based on updating cached configuration values in advanced by methods of the naming convention `configXXX` and finally sending that value to the chip and write all configuration bits to appropriate registers at once in order to reduce communication on the two-wire bus in contrast to sending configuration bits to the chip individually.
 
-Because the RTC chip does not change the content of its configuration register during operation on its own, it is not necessary to read the configuration register right before using getters. An application may rely on cached value of the configuration register.
+Because the RTC chip does not change the content of its configuration register and status bits of time keeping registers during operation on its own, it is not necessary to read those registers right before using getters. An application may rely on their cached values.
 
 
 <a id="interface"></a>
@@ -72,6 +72,7 @@ Because the RTC chip does not change the content of its configuration register d
 - [gbj_ds1307()](#gbj_ds1307)
 - [begin()](#begin)
 - [startClock()](#startClock)
+- [stopClock()](#stopClock)
 
 #### Setters
 - [setDateTime()](#setDateTime)
@@ -154,13 +155,16 @@ Some of [result or error codes](#constants).
 <a id="startClock"></a>
 ## startClock()
 #### Description
-The particular method sets the compilation date and time to the RTC chip and starts its internal oscillator.
-- The method is overloaded, either for flash constants or for generic strings pointers for date and time constants.
+The particular method sets the date and time to the RTC chip and starts its internal oscillator.
+- The method is overloaded, either for flashed strings or strings in SRAM pointers for date and time.
 - The method sets datetime regardless the RTC chip is running or not.
+- If no input parameters are used, just the *clock halt* (CH) bit of seconds time keeping register is set with retaining current second.
+- The methods are useful at using the compilation __DATE__ and __TIME__ constants.
 
 #### Syntax
     uint8_t startClock(const char* strDate, const char* strTime, uint8_t weekday = 1, bool mode12h = false);
     uint8_t startClock(const __FlashStringHelper* strDate, const __FlashStringHelper* strTime, uint8_t weekday = 1, bool mode12h = false);
+    uint8_t startClock();
 
 #### Parameters
 - __strDate__: Pointer to a system date formatted string.
@@ -190,10 +194,61 @@ Some of [result or error codes](#constants).
 gbj_ds1307 Device = gbj_ds1307();
 Device.startClock(__DATE__, __TIME__, 3); // 24h mode
 Device.startClock(__DATE__, __TIME__, 3, true);  // 12h mode
+Device.startClock(F(__DATE__), F(__TIME__)); // Flashed strings
+Device.startClock();  // Start just internal oscillator
 ```
 
 #### See also
 [setDateTime()](#setDateTime)
+
+[stopClock()](#stopClock)
+
+[Back to interface](#interface)
+
+
+<a id="stopClock"></a>
+## stopClock()
+#### Description
+The method resets *clock halt* (CH) bit of the seconds time keeping register with retaining current second in it.
+
+#### Syntax
+    uint8_t stopClock();
+
+#### Parameters
+None
+
+#### Returns
+Some of [result or error codes](#constants).
+
+#### See also
+[startClock()](#startClock)
+
+[Back to interface](#interface)
+
+
+<a id="startSqw"></a>
+## startSqw()
+#### Description
+The method enables generating square wave signal on SQW/OUT pin of the RTC chip at frequency determined by the input parameter and starts the clock.
+- The method sends new value of the control register or seconds time keeping register to the chip only if cached value differs from desired one in order to avoid useless communication on the two-wire bus.
+
+#### Syntax
+    uint8_t startSqw();
+
+#### Parameters
+- **rate**: Value of pair of RS1 and RS0 bits. It fallbacks to least significant 2 bits.
+  - *Valid values*: [gbj\_ds1307::SQW\_RATE\_1HZ ~ gbj\_ds1307::SQW\_RATE\_32KHZ](#SQW)
+  - *Default value*: [gbj\_ds1307::SQW\_RATE\_32KHZ](#SQW)
+
+#### Returns
+Some of [result or error codes](#constants).
+
+#### See also
+[configSqwRate()](#configSqwRate)
+
+[configSqwEnable()](#configSqwEnable)
+
+[startClock()](#startClock)
 
 [Back to interface](#interface)
 
@@ -249,7 +304,7 @@ void setup()
 #### Description
 The method reads datetime from the RTC chip, process it and place it to the referenced external structure (datetime record).
 - The method expects 21th century, so that adds 2000 to the read two-digit year number.
-- The method read configuration register to its cache as well.
+- The method reads configuration register to its cache as well.
 
 #### Syntax
     uint8_t getDateTime(Datetime &dtRecord);
@@ -311,7 +366,9 @@ Content of the configuration register cache.
 <a id="configClock"></a>
 ## configClockEnable(), configClockDisable()
 #### Description
-The particular method sets or resets *clock halt* (CH) bit of the seconds time keeping register. After setting date and time to the chip, its internal oscillator is started or stopped and real time clock is running or halted.
+The particular method sets or resets *clock halt* (CH) bit of the seconds time keeping register. After setting this bit by sending date and time to the chip, its internal oscillator is started or stopped and real time clock is running or halted.
+- The status of the CH bit is sent to the chip by the method [setDateTime()](#setDateTime), but this method does not change the CH bit on its own and retains the value set by particular `configClockXXX` method.
+- The status of the CH bit is set and sent to the chip by the method [startClock()](#startClock) as well, but in this case this method sets it to enable the clock running (it calls `configClockEnable()` by itself).
 
 #### Syntax
     void configClockEnable();
@@ -469,7 +526,7 @@ SQW frequency in form of one of the library constants [gbj\_ds1307::SQW\_RATE\_1
 <a id="getSqwLevel"></a>
 ## getSqwLevel()
 #### Description
-The method provides set output level of the SQW/OUT pin of the chip when the generating of square wave signal is disabled.
+The method provides output level of the SQW/OUT pin of the chip when the generating of square wave signal is disabled.
 
 #### Syntax
     uint8_t getSqwLevel();

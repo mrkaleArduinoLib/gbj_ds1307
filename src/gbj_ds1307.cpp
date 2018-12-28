@@ -65,7 +65,6 @@ uint8_t gbj_ds1307::setDateTime(const Datetime &dtRecord)
   else
   {
     _rtcRecord.hour |= bin2bcd(dtRecord.hour % 24);
-    if (_rtcRecord.hour > 12) _rtcRecord.hour |= (1 << CONFIG_PM);
   }
   //
   _rtcRecord.day = bin2bcd(constrain(dtRecord.day, 1, 31));
@@ -79,7 +78,8 @@ uint8_t gbj_ds1307::setDateTime(const Datetime &dtRecord)
 }
 
 
-uint8_t gbj_ds1307::startClock(const char* strDate, const char* strTime, uint8_t weekday, bool mode12h)
+uint8_t gbj_ds1307::startClock(const char* strDate, const char* strTime, \
+  uint8_t weekday, bool mode12h)
 {
   Datetime rtcDateTime;
   rtcDateTime.weekday = weekday;
@@ -87,6 +87,62 @@ uint8_t gbj_ds1307::startClock(const char* strDate, const char* strTime, uint8_t
   configClockEnable();
   gbj_apphelpers::parseDateTime(rtcDateTime, strDate, strTime);
   return setDateTime(rtcDateTime);
+}
+
+
+uint8_t gbj_ds1307::startClock(const __FlashStringHelper* strDate, \
+  const __FlashStringHelper* strTime, uint8_t weekday, bool mode12h)
+{
+  Datetime rtcDateTime;
+  rtcDateTime.weekday = weekday;
+  rtcDateTime.mode12h = mode12h;
+  configClockEnable();
+  gbj_apphelpers::parseDateTime(rtcDateTime, strDate, strTime);
+  return setDateTime(rtcDateTime);
+}
+
+
+uint8_t gbj_ds1307::startClock()
+{
+  bool origBusStop = getBusStop();
+  setBusRpte();
+  if (readRtcRecord()) return getLastResult();
+  configClockEnable();
+  setBusStopFlag(origBusStop);
+  if (busSend(CMD_REG_SECOND, _rtcRecord.second)) return getLastResult();
+  return getLastResult();
+}
+
+
+uint8_t gbj_ds1307::stopClock()
+{
+  bool origBusStop = getBusStop();
+  setBusRpte();
+  if (readRtcRecord()) return getLastResult();
+  configClockDisable();
+  setBusStopFlag(origBusStop);
+  if (busSend(CMD_REG_SECOND, _rtcRecord.second)) return getLastResult();
+  return getLastResult();
+}
+
+
+uint8_t gbj_ds1307::startSqw(uint8_t rate)
+{
+  // Do nothing if everything is set
+  if (getClockEnabled() && getSqwEnabled() && (getSqwRate() == rate)) return getLastResult();
+  // Set configuration register if needed
+  if (!getSqwEnabled() || getSqwRate() != rate)
+  {
+    configSqwEnable();
+    configSqwRate(rate);
+    if (setConfiguration()) return getLastResult();
+  }
+  // Start clock if needed
+  if (!getClockEnabled())
+  {
+    if (startClock()) return getLastResult();
+  }
+  return getLastResult();
 }
 
 
