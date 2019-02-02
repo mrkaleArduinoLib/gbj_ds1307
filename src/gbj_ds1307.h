@@ -71,13 +71,35 @@ uint8_t begin();
 
 
 /*
+  Convert internal structure to datetime.
+
+  DESCRIPTION:
+  The method converts already read datetime from the chip and stored in instance
+  internal structure to the referenced external structure (datetime record).
+  - The method converts recently read datetime from the chip without repeating
+    the reading from it. It is useful right after begin() method, which reads
+    the chip's status in either case.
+  - The method expects 21th century, so that adds 2000 to the read two-digit
+  year number.
+
+  PARAMETERS:
+  dtRecord - Referenced structure variable for writing read date and time.
+             - Data type: Datetime
+             - Default value: none
+             - Limited range: address space
+
+  RETURN: none
+*/
+void convertDateTime(Datetime &dtRecord);
+
+
+/*
   Read from time keeping registers of the chip.
 
   DESCRIPTION:
-  The method reads datetime from the chip, process it and place it to the
-  referenced external structure (datetime record).
-  - The method expects 21th century, so that adds 2000 to the read two-digit
-  year number.
+  The method reads datetime from the chip and calls convertDateTime() method
+  for obtaining the datetime to the referenced external structure (datetime
+  record).
 
   PARAMETERS:
   dtRecord - Referenced structure variable for writing read date and time.

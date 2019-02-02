@@ -73,6 +73,7 @@ Because the RTC chip does not change the content of its configuration register a
 - [begin()](#begin)
 - [startClock()](#startClock)
 - [stopClock()](#stopClock)
+- [convertDateTime()](#convertDateTime)
 
 #### Setters
 - [setDateTime()](#setDateTime)
@@ -299,11 +300,34 @@ void setup()
 [Back to interface](#interface)
 
 
+<a id="convertDateTime"></a>
+## convertDateTime()
+#### Description
+The method converts already read datetime from the chip and stored in instance internal structure to the referenced external structure (datetime record).
+- The method converts recently read datetime from the chip without repeating the reading from it. It is useful right after begin() method, which reads the chip's status in either case.
+- The method expects 21th century, so that adds 2000 to the read two-digit year number.
+
+#### Syntax
+    void convertDateTime(Datetime &dtRecord);
+
+#### Parameters
+- **dtRecord**: Referenced structure variable for placing read date and time defined in the library [gbjAppHelpers](#dependency) and declared in the library [gbjDS1307](#library) as an alias.
+  - *Valid values*: as described for the library [gbjAppHelpers](#dependency)
+  - *Default value*: none
+
+#### Returns
+None
+
+#### See also
+[getDateTime()](#getDateTime)
+
+[Back to interface](#interface)
+
+
 <a id="getDateTime"></a>
 ## getDateTime()
 #### Description
-The method reads datetime from the RTC chip, process it and place it to the referenced external structure (datetime record).
-- The method expects 21th century, so that adds 2000 to the read two-digit year number.
+The method reads datetime from the RTC chip, converts it and place it to the referenced external structure (datetime record).
 - The method reads configuration register to its cache as well.
 
 #### Syntax
@@ -318,6 +342,8 @@ The method reads datetime from the RTC chip, process it and place it to the refe
 Some of [result or error codes](#constants).
 
 #### See also
+[convertDateTime()](#convertDateTime)
+
 [setDateTime()](#setDateTime)
 
 [Back to interface](#interface)

@@ -14,6 +14,7 @@ begin	KEYWORD2
 startClock	KEYWORD2
 stopClock	KEYWORD2
 startSqw	KEYWORD2
+convertDateTime	KEYWORD2
 getDateTime	KEYWORD2
 setDateTime	KEYWORD2
 getConfiguration	KEYWORD2

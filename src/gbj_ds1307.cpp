@@ -24,9 +24,8 @@ uint8_t gbj_ds1307::readRtcRecord()
 }
 
 
-uint8_t gbj_ds1307::getDateTime(Datetime &dtRecord)
+void gbj_ds1307::convertDateTime(Datetime &dtRecord)
 {
-  if (readRtcRecord()) return getLastResult();
   dtRecord.second = bcd2bin(_rtcRecord.second & ~(1 << CONFIG_CH));
   dtRecord.minute = bcd2bin(_rtcRecord.minute);
   dtRecord.hour = bcd2bin(_rtcRecord.hour);
@@ -42,6 +41,13 @@ uint8_t gbj_ds1307::getDateTime(Datetime &dtRecord)
   dtRecord.month = bcd2bin(_rtcRecord.month);
   dtRecord.year = bcd2bin(_rtcRecord.year) + 2000;
   dtRecord.weekday = _rtcRecord.weekday;
+}
+
+
+uint8_t gbj_ds1307::getDateTime(Datetime &dtRecord)
+{
+  if (readRtcRecord()) return getLastResult();
+  convertDateTime(dtRecord);
   return getLastResult();
 }
 
