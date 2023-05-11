@@ -1,54 +1,54 @@
-<a id="library"></a>
 # gbjDS1307
-Library for the *Dallas Semiconductor* real time clock *DS1307* chip communicating on two-wire (I2C) bus.
-- Sensor has fixed addresses `0x68`.
-- The library utilizes external custom data type from the library *gbjAppHelpers* as a datetime structure in the form of alias in own body.
-- The library does not provide any formatting and parsing functionality for datetime structures. Use the dedicated library *gbjAppHelpers* for those funcionalities.
-- Library caches configuration register of the chip.
+
+Library for the *Dallas Semiconductor* `DS1307` <abbr title='Real Time Clock'>RTC</abbr> chip communicating on two-wire (also known as <abbr title='Inter-Integrated Circuit'>I2C</abbr>) bus.
+* Sensor has fixed address `0x68`.
+* The library utilizes external custom data type from the application library `gbjAppHelpers` as a datetime structure in the form of alias in own body.
+* The library does not provide any formatting and parsing functionality for datetime structures. Use the dedicated library `gbjAppHelpers` for those funcionalities.
+* Library caches configuration register of the chip.
 
 
 #### Particle hardware configuration
-- Connect microcontroller's pin `D0` to sensor's pin **SDA** (Serial Data).
-- Connect microcontroller's pin `D1` to sensor's pin **SCL** (Serial Clock).
+* Connect microcontroller's pin `D0` to sensor's pin **SDA** (Serial Data).
+* Connect microcontroller's pin `D1` to sensor's pin **SCL** (Serial Clock).
 
 #### Arduino UNO hardware configuration
-- Connect microcontroller's pin `A4` to sensor's pin **SDA** (Serial Data).
-- Connect microcontroller's pin `A5` to sensor's pin **SCL** (Serial Clock).
+* Connect microcontroller's pin `A4` to sensor's pin **SDA** (Serial Data).
+* Connect microcontroller's pin `A5` to sensor's pin **SCL** (Serial Clock).
 
 #### Espressif - ESP8266, ESP32 default hardware configuration
-- Connect microcontroller's pin `D2` to sensor's pin **SDA** (Serial Data).
-- Connect microcontroller's pin `D1` to sensor's pin **SCL** (Serial Clock).
+* Connect microcontroller's pin `D2` to sensor's pin **SDA** (Serial Data).
+* Connect microcontroller's pin `D1` to sensor's pin **SCL** (Serial Clock).
 
 
 <a id="dependency"></a>
 ## Dependency
 
 #### Particle platform
-- **Particle.h**: Includes alternative (C++) data type definitions.
+* **Particle.h**: Includes alternative (C++) data type definitions.
 
 #### Arduino platform
-- **Arduino.h**: Main include file for the Arduino SDK version greater or equal to 100.
-- **WProgram.h**: Main include file for the Arduino SDK version less than 100.
-- **inttypes.h**: Integer type conversions. This header file includes the exact-width integer definitions and extends them with additional facilities provided by the implementation.
-- **TwoWire**: I2C system library loaded from the file *Wire.h*.
+* **Arduino.h**: Main include file for the Arduino SDK version greater or equal to 100.
+* **inttypes.h**: Integer type conversions. This header file includes the exact-width integer definitions and extends them with additional facilities provided by the implementation.
+* **TwoWire**: I2C system library loaded from the file `Wire.h`.
 
 #### Custom Libraries
-- **gbjMemory**: Custom library loaded from the file *gbj_memory.h* for a generic memory on two-wire (I2C) bus as a parent class for the library [gbjDS1307](#library), which inherits common memory processing functionality from this library for utilizing non-volatile, battery backed up memory of the RTC chip.
-- **gbjAppHelpers**: Custom library loaded from the file *gbj_apphelpers.h* for a generic application logic. The library [gbjDS1307](#library) utilizes custom data type from it for datetime structure definition.
+* **gbjMemory**: Memory custom library loaded from the file `gbj_memory.h`, which provides common memory processing functionality here utilizing non-volatile, battery backed up memory of the RTC chip.
+* **gbjAppHelpers**: Custom library loaded from the file *gbj_apphelpers.h* for a generic application logic. The library [gbjDS1307](#library) utilizes custom data type from it for datetime structure definition.
 
 
 <a id="constants"></a>
+
 ## Constants
-- **gbj\_ds1307::VERSION**: Name and semantic version of the library.
-- **gbj\_ds1307::ADDRESS**: I2C address of the RTC chip.
+* **Addresses::ADDRESS**: I2C address of the RTC chip.
 
 
 <a id="SQW"></a>
+
 #### Square wave frequencies
-- **gbj\_ds1307::SQW\_RATE\_1HZ**: Square wave frequency 1 Hz.
-- **gbj\_ds1307::SQW\_RATE\_4KHZ**: Square wave frequency 4096 Hz.
-- **gbj\_ds1307::SQW\_RATE\_8KHZ**: Square wave frequency 8192 Hz.
-- **gbj\_ds1307::SQW\_RATE\_32KHZ**: Square wave frequency 32768 Hz.
+* **SquareWaveFrequency::SQW\_RATE\_1HZ**: Square wave frequency 1 Hz.
+* **SquareWaveFrequency::SQW\_RATE\_4KHZ**: Square wave frequency 4096 Hz.
+* **SquareWaveFrequency::SQW\_RATE\_8KHZ**: Square wave frequency 8192 Hz.
+* **SquareWaveFrequency::SQW\_RATE\_32KHZ**: Square wave frequency 32768 Hz.
 
 
 <a id="errors"></a>
@@ -57,6 +57,7 @@ The library does not provide any own specific error codes. All result and error 
 
 
 <a id="configuration"></a>
+
 ## Configuration
 The configuration of the RTC chip is realized by the configuration register, which consists of several configuration bits determining its behavior and time keeping registers for seconds and hours determining running and form of time expression. The library stores (caches) the value of those registers in its instance object.
 
@@ -64,69 +65,78 @@ The chip configuration implemented in the library is based on updating cached co
 
 Because the RTC chip does not change the content of its configuration register and status bits of time keeping registers during operation on its own, it is not necessary to read those registers right before using getters. An application may rely on their cached values.
 
+### Referencing constants
+In a sketch the constants can be referenced in following forms:
+* **Static constant** in the form `gbj_ds1307::<enumeration>::<constant>` or shortly `gbj_ds1307::<constant>`, e.g., _gbj_ds1307::SquareWaveFrequency::SQW\_RATE\_32KHZ_ or _gbj_ds1307::SquareWaveFrequency::SQW\_RATE\_32KHZ_.
+* **Instance constant** in the form `<object>.<constant>`, e.g., _object.SQW\_RATE\_32KHZ_.
+```cpp
+gbj_ds1307 device = gbj_ds1307();
+setup()
+{
+ begin(device.AT24C512, device.ADDRESS_5);
+}
+```
 
 <a id="interface"></a>
+
 ## Interface
 
 #### Main
-- [gbj_ds1307()](#gbj_ds1307)
-- [begin()](#begin)
-- [startClock()](#startClock)
-- [stopClock()](#stopClock)
-- [convertDateTime()](#convertDateTime)
+* [gbj_ds1307()](#gbj_ds1307)
+* [begin()](#begin)
+* [startClock()](#startClock)
+* [stopClock()](#stopClock)
+* [convertDateTime()](#convertDateTime)
 
 #### Setters
-- [setDateTime()](#setDateTime)
-- [setConfiguration()](#setConfiguration)
-- [configClockEnable()](#configClock)
-- [configClockDisable()](#configClock)
-- [configSqwEnable()](#configSqw)
-- [configSqwDisable()](#configSqw)
-- [configSqwLevelHigh()](#configSqwLevel)
-- [configSqwLevelLow()](#configSqwLevel)
-- [configSqwRate()](#configSqwRate)
+* [setDateTime()](#setDateTime)
+* [setConfiguration()](#setConfiguration)
+* [configClockEnable()](#configClock)
+* [configClockDisable()](#configClock)
+* [configSqwEnable()](#configSqw)
+* [configSqwDisable()](#configSqw)
+* [configSqwLevelHigh()](#configSqwLevel)
+* [configSqwLevelLow()](#configSqwLevel)
+* [configSqwRate()](#configSqwRate)
 
 #### Getters
-- [getConfiguration()](#getConfiguration)
-- [getPowerUp()](#getPowerUp)
-- [getDateTime()](#getDateTime)
-- [getClockEnabled()](#getClockEnabled)
-- [getClockMode12H()](#getClockMode12H)
-- [getSqwRate()](#getSqwRate)
-- [getSqwLevel()](#getSqwLevel)
-- [getSqwEnabled()](#getSqwEnabled)
+* [getConfiguration()](#getConfiguration)
+* [getPowerUp()](#getPowerUp)
+* [getDateTime()](#getDateTime)
+* [getClockEnabled()](#getClockEnabled)
+* [getClockMode12H()](#getClockMode12H)
+* [getSqwRate()](#getSqwRate)
+* [getSqwLevel()](#getSqwLevel)
+* [getSqwEnabled()](#getSqwEnabled)
 
-Other possible setters and getters are inherited from the parent library [gbjMemory](#dependency) and described there.
+Other possible setters and getters are inherited from the predecessor libraries and described there.
 
 
 <a id="gbj_ds1307"></a>
+
 ## gbj_ds1307()
+
 #### Description
-The library does not need special constructor and destructor, so that the inherited ones are good enough and there is no need to define them in the library, just use it with default or specific parameters as defined at constructor of parent library [gbjMemory](#dependency).
-- Constructor sets parameters specific to the two-wire bus in general.
-- All the constructor parameters can be changed dynamically with corresponding setters later in a sketch.
-- Although the datasheet for the RTC chip claims it work on 100 kHz frequency of the two-wire bus, an experiments proved, that it works on 400 kHz frequency as well. So that the constructor does not force the 100 kHz frequency, just default it.
+The library does not need special constructor and destructor, so that the inherited ones are good enough and there is no need to define them in the library, just use it with default or specific parameters as defined at constructor of parent library.
+* Constructor sets parameters specific to the two-wire bus in general.
+* All the constructor parameters can be changed dynamically with corresponding setters later in a sketch.
+* Although the datasheet for the RTC chip claims it work on 100 kHz frequency of the two-wire bus, an experiments proved, that it works on 400 kHz frequency as well. So that the constructor does not force the 100 kHz frequency, just default it.
 
 #### Syntax
-    gbj_ds1307(uint32_t clockSpeed, uint8_t pinSDA, uint8_t pinSCL);
+    gbj_ds1307(ClockSpeed clockSpeed, uint8_t pinSDA, uint8_t pinSCL)
 
 #### Parameters
-<a id="prm_busClock"></a>
-- **clockSpeed**: Two-wire bus clock frequency in Hertz. If the clock is not from enumeration, it fallbacks to 100 kHz.
-  - *Valid values*: gbj\_ds1307::CLOCK\_100KHZ, gbj\_ds1307::CLOCK\_400KHZ
-  - *Default value*: gbj\_ds1307::CLOCK\_100KHZ
+* **clockSpeed**: Two-wire bus clock frequency in Hertz.
+  * *Valid values*: ClockSpeed::CLOCK\_100KHZ, ClockSpeed::CLOCK\_400KHZ
+  * *Default value*: ClockSpeed::CLOCK\_100KHZ
 
+* **pinSDA**: Microcontroller's pin for serial data. It is not a board pin but GPIO number. For hardware two-wire bus platforms it is irrelevant and none of methods utilizes this parameter for such as platforms for communication on the bus. On the other hand, for those platforms the parameters might be utilized for storing some specific attribute in the class instance object.
+  * *Valid values*: positive integer
+  * *Default value*: 4 (GPIO4, D2)
 
-<a id="prm_pinSDA"></a>
-- **pinSDA**: Microcontroller's pin for serial data. It is not a board pin but GPIO number. For hardware two-wire bus platforms it is irrelevant and none of methods utilizes this parameter for such as platforms for communication on the bus. On the other hand, for those platforms the parameters might be utilized for storing some specific attribute in the class instance object.
-  - *Valid values*: positive integer
-  - *Default value*: 4 (GPIO4, D2)
-
-
-<a id="prm_pinSCL"></a>
-- **pinSCL**: Microcontroller's pin for serial clock. It is not a board pin but GPIO number. For hardware two-wire bus platforms it is irrelevant and none of methods utilizes this parameter for such as platforms. On the other hand, for those platforms the parameters might be utilized for storing some specific attribute in the class instance object.
-  - *Valid values*: positive integer
-  - *Default value*: 5 (GPIO5, D1)
+* **pinSCL**: Microcontroller's pin for serial clock. It is not a board pin but GPIO number. For hardware two-wire bus platforms it is irrelevant and none of methods utilizes this parameter for such as platforms. On the other hand, for those platforms the parameters might be utilized for storing some specific attribute in the class instance object.
+  * *Valid values*: positive integer
+  * *Default value*: 5 (GPIO5, D1)
 
 #### Returns
 Object performing the sensor management.
@@ -136,13 +146,15 @@ The constructor cannot return [a result or error code](#constants) directly, how
 
 
 <a id="begin"></a>
+
 ## begin()
+
 #### Description
 The method initiates the RTC chip and two-wire bus.
-- The method sets parameters of non-volatile memory and reads configuration register to its cache..
+* The method sets parameters of non-volatile memory and reads configuration register to its cache..
 
 #### Syntax
-    uint8_t begin();
+    ResultCodes begin()
 
 #### Parameters
 None
@@ -154,49 +166,48 @@ Some of [result or error codes](#constants).
 
 
 <a id="startClock"></a>
+
 ## startClock()
+
 #### Description
 The particular method sets the date and time to the RTC chip and starts its internal oscillator.
-- The method is overloaded, either for flashed strings or strings in SRAM pointers for date and time.
-- The method sets datetime regardless the RTC chip is running or not.
-- If no input parameters are used, just the *clock halt* (CH) bit of seconds time keeping register is set with retaining current second.
-- The methods are useful at using the compilation __DATE__ and __TIME__ constants.
+* The method is overloaded, either for flashed strings or strings in SRAM pointers for date and time.
+* The method sets datetime regardless the RTC chip is running or not.
+* If no input parameters are used, just the <abbr title='Clock Halt'>CH</abbr> bit of seconds time keeping register is set with retaining current second.
+* The methods are useful at using the compilation \_\_DATE\_\_ and \_\_TIME\_\_ constants.
 
 #### Syntax
-    uint8_t startClock(const char* strDate, const char* strTime, uint8_t weekday = 1, bool mode12h = false);
-    uint8_t startClock(const __FlashStringHelper* strDate, const __FlashStringHelper* strTime, uint8_t weekday = 1, bool mode12h = false);
-    uint8_t startClock();
+    ResultCodes startClock(const char* strDate, const char* strTime, uint8_t weekday, bool mode12h)
+    ResultCodes startClock(const __FlashStringHelper* strDate, const __FlashStringHelper* strTime, uint8_t weekday = 1, bool mode12h = false)
+    ResultCodes startClock()
 
 #### Parameters
-- __strDate__: Pointer to a system date formatted string.
-  - *Valid values*: address range
-  - *Default value*: none
+* **strDate**: Pointer to a system date formatted string.
+  * *Valid values*: address range
+  * *Default value*: none
 
+* **strTime**: Pointer to a system time formatted string.
+  * *Valid values*: address range
+  * *Default value*: none
 
-- **strTime**: Pointer to a system time formatted string.
-  - *Valid values*: address range
-  - *Default value*: none
+* **weekday**: Number of current day in a week. It is up to an application to set the starting day in the week. If weekdays are irrelevant, the default value may be used. The provided weekday fallbacks to valid range.
+  * *Valid values*: 1 ~ 7
+  * *Default value*: 1
 
-
-- **weekday**: Number of current day in a week. It is up to an application to set the starting day in the week. If weekdays are irrelevant, the default value may be used. The provided weekday fallbacks to valid range.
-  - *Valid values*: 1 ~ 7
-  - *Default value*: 1
-
-
-- **mode12h**: Flag about using 12 hours mode.
-  - *Valid values*: true = 12 hours mode, false = 24 hours mode
-  - *Default value*: false (24 hours mode)
+* **mode12h**: Flag about using 12 hours mode.
+  * *Valid values*: true = 12 hours mode, false = 24 hours mode
+  * *Default value*: false (24 hours mode)
 
 #### Returns
 Some of [result or error codes](#constants).
 
 #### Example
 ```cpp
-gbj_ds1307 Device = gbj_ds1307();
-Device.startClock(__DATE__, __TIME__, 3); // 24h mode
-Device.startClock(__DATE__, __TIME__, 3, true);  // 12h mode
-Device.startClock(F(__DATE__), F(__TIME__)); // Flashed strings
-Device.startClock();  // Start just internal oscillator
+gbj_ds1307 device = gbj_ds1307();
+device.startClock(__DATE__, __TIME__, 3); // 24h mode
+device.startClock(__DATE__, __TIME__, 3, true);  // 12h mode
+device.startClock(F(__DATE__), F(__TIME__)); // Flashed strings
+device.startClock();  // Start just internal oscillator
 ```
 
 #### See also
@@ -208,12 +219,14 @@ Device.startClock();  // Start just internal oscillator
 
 
 <a id="stopClock"></a>
+
 ## stopClock()
+
 #### Description
-The method resets *clock halt* (CH) bit of the seconds time keeping register with retaining current second in it.
+The method resets CH bit of the seconds time keeping register with retaining current second in it.
 
 #### Syntax
-    uint8_t stopClock();
+    ResultCodes stopClock()
 
 #### Parameters
 None
@@ -228,18 +241,20 @@ Some of [result or error codes](#constants).
 
 
 <a id="startSqw"></a>
+
 ## startSqw()
+
 #### Description
 The method enables generating square wave signal on SQW/OUT pin of the RTC chip at frequency determined by the input parameter and starts the clock.
-- The method sends new value of the control register or seconds time keeping register to the chip only if cached value differs from desired one in order to avoid useless communication on the two-wire bus.
+* The method sends new value of the control register or seconds time keeping register to the chip only if cached value differs from desired one in order to avoid useless communication on the two-wire bus.
 
 #### Syntax
-    uint8_t startSqw();
+    ResultCodes startSqw()
 
 #### Parameters
-- **rate**: Value of pair of RS1 and RS0 bits. It fallbacks to least significant 2 bits.
-  - *Valid values*: [gbj\_ds1307::SQW\_RATE\_1HZ ~ gbj\_ds1307::SQW\_RATE\_32KHZ](#SQW)
-  - *Default value*: [gbj\_ds1307::SQW\_RATE\_32KHZ](#SQW)
+* **rate**: Value of pair of RS1 and RS0 bits. It fallbacks to least significant 2 bits.
+  * *Valid values*: [SquareWaveFrequency::SQW\_RATE\_1HZ ~ SquareWaveFrequency::SQW\_RATE\_32KHZ](#SQW)
+  * *Default value*: [SquareWaveFrequency::SQW\_RATE\_32KHZ](#SQW)
 
 #### Returns
 Some of [result or error codes](#constants).
@@ -255,26 +270,28 @@ Some of [result or error codes](#constants).
 
 
 <a id="setDateTime"></a>
+
 ## setDateTime()
+
 #### Description
 The method sanitizes datetime parameters taken from referenced external structure (datetime record) and writes them to the RTC chip.
-- The method strips century from the year and writes just two-digit year number.
-- The method writes cached value to the control register of the chip as well, so that the chip can be set, started and configured at once.
+* The method strips century from the year and writes just two-digit year number.
+* The method writes cached value to the control register of the chip as well, so that the chip can be set, started and configured at once.
 
 #### Syntax
-    uint8_t setDateTime(const Datetime &dtRecord);
+    ResultCodes setDateTime(const Datetime &dtRecord)
 
 #### Parameters
-- **dtRecord**: Referenced structure variable for desired date and time defined in the library [gbjAppHelpers](#dependency) and declared in the library [gbjDS1307](#library) as an alias.
-  - *Valid values*: as described for the library [gbjAppHelpers](#dependency)
-  - *Default value*: none
+* **dtRecord**: Referenced structure variable for desired date and time defined in the library [gbjAppHelpers](#dependency) and declared as an alias.
+  * *Valid values*: as described for the library [gbjAppHelpers](#dependency)
+  * *Default value*: none
 
 #### Returns
 Some of [result or error codes](#constants).
 
 #### Example
 ```cpp
-gbj_ds1307 Device = gbj_ds1307();
+gbj_ds1307 device = gbj_ds1307()
 gbj_ds1307::Datetime rtcDateTime;
 void setup()
 {
@@ -288,7 +305,7 @@ void setup()
   rtcDateTime.mode12h = true;
   rtcDateTime.pm = false;
   //
-  Device.setDateTime(rtcDateTime);
+  device.setDateTime(rtcDateTime);
 }
 ```
 
@@ -301,19 +318,21 @@ void setup()
 
 
 <a id="convertDateTime"></a>
+
 ## convertDateTime()
+
 #### Description
 The method converts already read datetime from the chip and stored in instance internal structure to the referenced external structure (datetime record).
-- The method converts recently read datetime from the chip without repeating the reading from it. It is useful right after begin() method, which reads the chip's status in either case.
-- The method expects 21th century, so that adds 2000 to the read two-digit year number.
+* The method converts recently read datetime from the chip without repeating the reading from it. It is useful right after begin() method, which reads the chip's status in either case.
+* The method expects 21th century, so that adds 2000 to the read two-digit year number.
 
 #### Syntax
-    void convertDateTime(Datetime &dtRecord);
+    void convertDateTime(Datetime &dtRecord)
 
 #### Parameters
-- **dtRecord**: Referenced structure variable for placing read date and time defined in the library [gbjAppHelpers](#dependency) and declared in the library [gbjDS1307](#library) as an alias.
-  - *Valid values*: as described for the library [gbjAppHelpers](#dependency)
-  - *Default value*: none
+* **dtRecord**: Referenced structure variable for placing read date and time defined in the library [gbjAppHelpers](#dependency) and declared as an alias.
+  * *Valid values*: as described for the library [gbjAppHelpers](#dependency)
+  * *Default value*: none
 
 #### Returns
 None
@@ -325,18 +344,20 @@ None
 
 
 <a id="getDateTime"></a>
+
 ## getDateTime()
+
 #### Description
 The method reads datetime from the RTC chip, converts it and place it to the referenced external structure (datetime record).
-- The method reads configuration register to its cache as well.
+* The method reads configuration register to its cache as well.
 
 #### Syntax
-    uint8_t getDateTime(Datetime &dtRecord);
+    ResultCodes getDateTime(Datetime &dtRecord)
 
 #### Parameters
-- **dtRecord**: Referenced structure variable for placing read date and time defined in the library [gbjAppHelpers](#dependency) and declared in the library [gbjDS1307](#library) as an alias.
-  - *Valid values*: as described for the library [gbjAppHelpers](#dependency)
-  - *Default value*: none
+* **dtRecord**: Referenced structure variable for placing read date and time defined in the library [gbjAppHelpers](#dependency) and declared as an alias.
+  * *Valid values*: as described for the library [gbjAppHelpers](#dependency)
+  * *Default value*: none
 
 #### Returns
 Some of [result or error codes](#constants).
@@ -350,12 +371,14 @@ Some of [result or error codes](#constants).
 
 
 <a id="setConfiguration"></a>
+
 ## setConfiguration()
+
 #### Description
 The method writes the new content of the configuration register stored in the instance object (configuration cache) to the chip. This content should has been prepared by methods of names `configXXX` right before.
 
 #### Syntax
-    uint8_t setConfiguration();
+    ResultCodes setConfiguration()
 
 #### Parameters
 None
@@ -370,12 +393,14 @@ Some of [result or error codes](#constants).
 
 
 <a id="getConfiguration"></a>
+
 ## getConfiguration()
+
 #### Description
 The method provides content of the configuration register from its cache read or updated recently.
 
 #### Syntax
-    uint8_t getConfiguration();
+    uint8_t getConfiguration()
 
 #### Parameters
 None
@@ -390,15 +415,17 @@ Content of the configuration register cache.
 
 
 <a id="configClock"></a>
+
 ## configClockEnable(), configClockDisable()
+
 #### Description
 The particular method sets or resets *clock halt* (CH) bit of the seconds time keeping register. After setting this bit by sending date and time to the chip, its internal oscillator is started or stopped and real time clock is running or halted.
-- The status of the CH bit is sent to the chip by the method [setDateTime()](#setDateTime), but this method does not change the CH bit on its own and retains the value set by particular `configClockXXX` method.
-- The status of the CH bit is set and sent to the chip by the method [startClock()](#startClock) as well, but in this case this method sets it to enable the clock running (it calls `configClockEnable()` by itself).
+* The status of the CH bit is sent to the chip by the method [setDateTime()](#setDateTime), but this method does not change the CH bit on its own and retains the value set by particular `configClockXXX` method.
+* The status of the CH bit is set and sent to the chip by the method [startClock()](#startClock) as well, but in this case this method sets it to enable the clock running (it calls `configClockEnable()` by itself).
 
 #### Syntax
-    void configClockEnable();
-    void configClockDisable();
+    void configClockEnable()
+    void configClockDisable()
 
 #### Parameters
 None
@@ -410,13 +437,15 @@ None
 
 
 <a id="configSqw"></a>
+
 ## configSqwEnable(), configSqwDisable()
+
 #### Description
-The particular method sets or resets *square wave enable* (SQWE) bit in the configuration register cache. After sending that cached value to the chip, the generating of square wave signal on the SQW/OUT pin of the chip starts or stops.
+The particular method sets or resets <abbr title='Square Wave Enable'>SQWE</abbr> bit in the configuration register cache. After sending that cached value to the chip, the generating of square wave signal on the SQW/OUT pin of the chip starts or stops.
 
 #### Syntax
-    void configSqwEnable();
-    void configSqwDisable();
+    void configSqwEnable()
+    void configSqwDisable()
 
 #### Parameters
 None
@@ -433,13 +462,15 @@ None
 
 
 <a id="configSqwLevel"></a>
+
 ## configSqwLevelHigh(), configSqwLevelLow()
+
 #### Description
-The particular method sets or resets *output control* (OUT) bit in the configuration register cache. It determines stable level of the SQW/OUT pin of the chip when generating square wave signal is disabled.
+The particular method sets or resets <abbr title='Output Control'>OUT</abbr> bit in the configuration register cache. It determines stable level of the SQW/OUT pin of the chip when generating square wave signal is disabled.
 
 #### Syntax
-    void configSqwLevelHigh();
-    void configSqwLevelLow();
+    void configSqwLevelHigh()
+    void configSqwLevelLow()
 
 #### Parameters
 None
@@ -454,17 +485,19 @@ None
 
 
 <a id="configSqwRate"></a>
+
 ## configSqwRate()
+
 #### Description
-The method sets *rate select* (RS0, RS1) bits in the configuration register cache. It determines frequency of the generated square wave signal on the SQW/OUT pin when the generating is enabled. The particular frequency is determined by corresponding library [constant](#SQW).
+The method sets <abbr title='Rate Select'>RS0, RS1</abbr> bits in the configuration register cache. It determines frequency of the generated square wave signal on the SQW/OUT pin when the generating is enabled. The particular frequency is determined by corresponding library [constant](#SQW).
 
 #### Syntax
-    void configSqwRate(uint8_t rate);
+    void configSqwRate(SquareWaveFrequency rate)
 
 #### Parameters
-- **rate**: Value of pair of RS1 and RS0 bits. It fallbacks to least significant 2 bits.
-  - *Valid values*: [gbj\_ds1307::SQW\_RATE\_1HZ ~ gbj\_ds1307::SQW\_RATE\_32KHZ](#SQW)
-  - *Default value*: None
+* **rate**: Value of pair of RS1 and RS0 bits. It fallbacks to least significant 2 bits.
+  * *Valid values*: [SquareWaveFrequency::SQW\_RATE\_1HZ ~ SquareWaveFrequency::SQW\_RATE\_32KHZ](#SQW)
+  * *Default value*: None
 
 #### Returns
 None
@@ -476,12 +509,14 @@ None
 
 
 <a id="getPowerUp"></a>
+
 ## getPowerUp()
+
 #### Description
-The method provides flag determining that the configuration register has the value typical for its power-up content. It does not necessary mean, that the chip has been turned off and on, just the configuration register values in the same.
+The method provides flag determining that the configuration register has the value typical for its power-up content. It does not necessary mean, that the chip has been turned off and on, just the configuration register values are the same.
 
 #### Syntax
-    bool getPowerUp();
+    bool getPowerUp()
 
 #### Parameters
 None
@@ -493,12 +528,14 @@ Flag about content of the configuration register typical for power-up state.
 
 
 <a id="getClockEnabled"></a>
+
 ## getSqwEnabled()
+
 #### Description
 The method provides flag whether the CH bit of the seconds time keeping register is set or not, i.e., whether the internal oscillator of the chip and real time clock is running or not.
 
 #### Syntax
-    bool getClockEnabled();
+    bool getClockEnabled()
 
 #### Parameters
 None
@@ -513,12 +550,14 @@ Flag about running real time clock.
 
 
 <a id="getClockMode12H"></a>
+
 ## getClockMode12H()
+
 #### Description
 The method provides flag whether the 12 hours mode bit in the hours time keeping register is set or not, i.e., whether the time is expressed in 12 or 24 hours form.
 
 #### Syntax
-    bool getClockMode12H();
+    bool getClockMode12H()
 
 #### Parameters
 None
@@ -530,18 +569,20 @@ Flag about active 12 hours mode.
 
 
 <a id="getSqwRate"></a>
+
 ## getSqwRate()
+
 #### Description
 The method provides current set square wave frequency regardless if the generating is enabled and running or not.
 
 #### Syntax
-    uint8_t getSqwRate();
+    SquareWaveFrequency getSqwRate()
 
 #### Parameters
 None
 
 #### Returns
-SQW frequency in form of one of the library constants [gbj\_ds1307::SQW\_RATE\_1HZ ~ gbj\_ds1307::SQW\_RATE\_32KHZ](#SQW).
+SQW frequency in form of one of the library constants [SquareWaveFrequency::SQW\_RATE\_1HZ ~ SquareWaveFrequency::SQW\_RATE\_32KHZ](#SQW).
 
 #### See also
 [configSqwRate()](#configSqwRate)
@@ -550,12 +591,14 @@ SQW frequency in form of one of the library constants [gbj\_ds1307::SQW\_RATE\_1
 
 
 <a id="getSqwLevel"></a>
+
 ## getSqwLevel()
+
 #### Description
 The method provides output level of the SQW/OUT pin of the chip when the generating of square wave signal is disabled.
 
 #### Syntax
-    uint8_t getSqwLevel();
+    uint8_t getSqwLevel()
 
 #### Parameters
 None
@@ -572,12 +615,14 @@ Output level 1 or 0, i.e., HIGH or LOW.
 
 
 <a id="getSqwEnabled"></a>
+
 ## getSqwEnabled()
+
 #### Description
 The method provides flag whether the SQWE bit of the configuration register is set or not, i.e., whether the generating of the square wave signal is enabled or not.
 
 #### Syntax
-    bool getSqwEnabled();
+    bool getSqwEnabled()
 
 #### Parameters
 None
