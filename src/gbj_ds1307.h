@@ -46,7 +46,7 @@ public:
   // External datetime structure
   using Datetime = gbj_apphelpers::Datetime;
 
-  gbj_ds1307(ClockSpeed clockSpeed = ClockSpeed::CLOCK_100KHZ,
+  gbj_ds1307(ClockSpeeds clockSpeed = ClockSpeeds::CLOCK_100KHZ,
              uint8_t pinSDA = 4,
              uint8_t pinSCL = 5)
     : gbj_memory(clockSpeed, pinSDA, pinSCL)
