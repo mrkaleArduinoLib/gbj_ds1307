@@ -39,6 +39,9 @@ Library for the *Dallas Semiconductor* `DS1307` <abbr title='Real Time Clock'>RT
 <a id="constants"></a>
 
 ## Constants
+The library does not have specific error codes. Error codes as well as result code are inherited from the parent library only. The result code and error codes can be tested in the operational code with its method `getLastResult()`, `isError()` or `isSuccess()`.
+
+#### Sensor addresses
 * **Addresses::ADDRESS**: I2C address of the RTC chip.
 
 
@@ -140,7 +143,7 @@ The library does not need special constructor and destructor, so that the inheri
 
 #### Returns
 Object performing the sensor management.
-The constructor cannot return [a result or error code](#constants) directly, however, it stores them in the instance object. The result can be tested in the operational code with the method [getLastResult()](#getLastResult), [isError()](#isError), or [isSuccess()](#isSuccess).
+The constructor cannot return [a result or error code](#constants) directly, however, it stores them in the instance object.
 
 [Back to interface](#interface)
 
