@@ -223,7 +223,7 @@ public:
     }
     configClockEnable();
     setBusStopFlag(origBusStop);
-    return busSend(Commands::CMD_REG_SECOND, _rtcRecord.second);
+    return busSend(Commands::CMD_REG_SECOND, rtcRecord_.second);
   }
 
   /*
@@ -247,7 +247,7 @@ public:
     }
     configClockDisable();
     setBusStopFlag(origBusStop);
-    return busSend(Commands::CMD_REG_SECOND, _rtcRecord.second);
+    return busSend(Commands::CMD_REG_SECOND, rtcRecord_.second);
   }
 
   /*
@@ -313,34 +313,34 @@ public:
   */
   inline ResultCodes setConfiguration()
   {
-    return busSend(Commands::CMD_REG_CONTROL, _rtcRecord.control);
+    return busSend(Commands::CMD_REG_CONTROL, rtcRecord_.control);
   }
 
   // Preparation of timekeeping registers
   inline void configClockEnable()
   {
-    _rtcRecord.second &= ~(1 << SecondBits::CONFIG_CH);
+    rtcRecord_.second &= ~(1 << SecondBits::CONFIG_CH);
   }
   inline void configClockDisable()
   {
-    _rtcRecord.second |= (1 << SecondBits::CONFIG_CH);
+    rtcRecord_.second |= (1 << SecondBits::CONFIG_CH);
   }
   // Preparation of control register value
   inline void configSqwLevelHigh()
   {
-    _rtcRecord.control |= (1 << ConfigBits::CONFIG_OUT);
+    rtcRecord_.control |= (1 << ConfigBits::CONFIG_OUT);
   }
   inline void configSqwLevelLow()
   {
-    _rtcRecord.control &= ~(1 << ConfigBits::CONFIG_OUT);
+    rtcRecord_.control &= ~(1 << ConfigBits::CONFIG_OUT);
   }
   inline void configSqwEnable()
   {
-    _rtcRecord.control |= (1 << ConfigBits::CONFIG_SQWE);
+    rtcRecord_.control |= (1 << ConfigBits::CONFIG_SQWE);
   }
   inline void configSqwDisable()
   {
-    _rtcRecord.control &= ~(1 << ConfigBits::CONFIG_SQWE);
+    rtcRecord_.control &= ~(1 << ConfigBits::CONFIG_SQWE);
   }
 
   /*
@@ -362,37 +362,37 @@ public:
   inline void configSqwRate(SquareWaveFrequency rate)
   {
     // Clear bits
-    _rtcRecord.control &= ~(B11 << ConfigBits::CONFIG_RS0);
+    rtcRecord_.control &= ~(B11 << ConfigBits::CONFIG_RS0);
     // Set bits
-    _rtcRecord.control |= ((rate & B11) << ConfigBits::CONFIG_RS0);
+    rtcRecord_.control |= ((rate & B11) << ConfigBits::CONFIG_RS0);
   }
 
   // Getters
-  inline uint8_t getConfiguration() { return _rtcRecord.control; }
+  inline uint8_t getConfiguration() { return rtcRecord_.control; }
   inline SquareWaveFrequency getSqwRate()
   {
     return static_cast<SquareWaveFrequency>(
-      (_rtcRecord.control >> ConfigBits::CONFIG_RS0) & B11);
+      (rtcRecord_.control >> ConfigBits::CONFIG_RS0) & B11);
   }
   inline uint8_t getSqwLevel()
   {
-    return (_rtcRecord.control >> ConfigBits::CONFIG_OUT) & B1;
+    return (rtcRecord_.control >> ConfigBits::CONFIG_OUT) & B1;
   }
   inline bool getPowerUp()
   {
-    return _rtcRecord.control == Params::PARAM_POWERUP;
+    return rtcRecord_.control == Params::PARAM_POWERUP;
   }
   inline bool getSqwEnabled()
   {
-    return ((_rtcRecord.control >> ConfigBits::CONFIG_SQWE) & B1) == 1;
+    return ((rtcRecord_.control >> ConfigBits::CONFIG_SQWE) & B1) == 1;
   }
   inline bool getClockEnabled()
   {
-    return ((_rtcRecord.second >> SecondBits::CONFIG_CH) & B1) == 0;
+    return ((rtcRecord_.second >> SecondBits::CONFIG_CH) & B1) == 0;
   }
   inline bool getClockMode12H()
   {
-    return ((_rtcRecord.hour >> HourBits::CONFIG_12H) & B1) == 1;
+    return ((rtcRecord_.hour >> HourBits::CONFIG_12H) & B1) == 1;
   }
 
 private:
@@ -453,7 +453,7 @@ private:
     uint8_t month;
     uint8_t year;
     uint8_t control;
-  } _rtcRecord;
+  } rtcRecord_;
   inline ResultCodes readRtcRecord()
   {
     bool origBusStop = getBusStop();
@@ -463,8 +463,8 @@ private:
       return getLastResult();
     }
     setBusStopFlag(origBusStop);
-    return busReceive(reinterpret_cast<uint8_t *>(&_rtcRecord),
-                      sizeof(_rtcRecord));
+    return busReceive(reinterpret_cast<uint8_t *>(&rtcRecord_),
+                      sizeof(rtcRecord_));
   }
 
   inline uint8_t bcd2bin(uint8_t bcdValue)
